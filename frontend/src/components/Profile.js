@@ -7,6 +7,7 @@ function Profile() {
   const [user, setUser] = useState({});
   const [skills, setSkills] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState('');
+  const [newSkillName, setNewSkillName] = useState('');
   const [skillType, setSkillType] = useState('teach');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -59,9 +60,18 @@ function Profile() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:8080/api/user-skills', { skill_id: selectedSkill, skill_type: skillType }, { headers: { Authorization: `Bearer ${token}` } });
+      let skillId = selectedSkill;
+      if (newSkillName.trim()) {
+        // Add new skill first
+        const skillRes = await axios.post('http://localhost:8080/api/skills', { name: newSkillName.trim() }, { headers: { Authorization: `Bearer ${token}` } });
+        skillId = skillRes.data.id;
+        setNewSkillName('');
+        fetchSkills(); // Refresh skills list
+      }
+      await axios.post('http://localhost:8080/api/user-skills', { skill_id: skillId, skill_type: skillType }, { headers: { Authorization: `Bearer ${token}` } });
       setError('');
       alert('Skill added');
+      setSelectedSkill('');
       fetchProfile(); // Refresh to show new skill
     } catch (err) {
       setError('Failed to add skill');
@@ -267,27 +277,35 @@ function Profile() {
               <Box sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom>Manage Skills</Typography>
 
-                <Paper sx={{ p: 2, mb: 3 }}>
-                  <Typography variant="subtitle1" gutterBottom>Add New Skill</Typography>
-                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <FormControl sx={{ minWidth: 200 }}>
-                      <InputLabel>Skill</InputLabel>
-                      <Select value={selectedSkill} onChange={(e) => setSelectedSkill(e.target.value)} label="Skill">
-                        {skills.map(skill => <MenuItem key={skill.id} value={skill.id}>{skill.name}</MenuItem>)}
-                      </Select>
-                    </FormControl>
-                    <FormControl sx={{ minWidth: 120 }}>
-                      <InputLabel>Type</InputLabel>
-                      <Select value={skillType} onChange={(e) => setSkillType(e.target.value)} label="Type">
-                        <MenuItem value="teach">Teach</MenuItem>
-                        <MenuItem value="learn">Learn</MenuItem>
-                      </Select>
-                    </FormControl>
-                    <Button variant="contained" onClick={addSkill} disabled={loading || !selectedSkill}>
-                      Add Skill
-                    </Button>
-                  </Box>
-                </Paper>
+                 <Paper sx={{ p: 2, mb: 3 }}>
+                   <Typography variant="subtitle1" gutterBottom>Add New Skill</Typography>
+                   <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                     <TextField
+                       label="New Skill Name (or select below)"
+                       value={newSkillName}
+                       onChange={(e) => setNewSkillName(e.target.value)}
+                       sx={{ minWidth: 200 }}
+                       placeholder="Enter a new skill name"
+                     />
+                     <Typography variant="body2" color="textSecondary">or</Typography>
+                     <FormControl sx={{ minWidth: 200 }}>
+                       <InputLabel>Select Existing Skill</InputLabel>
+                       <Select value={selectedSkill} onChange={(e) => setSelectedSkill(e.target.value)} label="Select Existing Skill">
+                         {skills.map(skill => <MenuItem key={skill.id} value={skill.id}>{skill.name}</MenuItem>)}
+                       </Select>
+                     </FormControl>
+                     <FormControl sx={{ minWidth: 120 }}>
+                       <InputLabel>Type</InputLabel>
+                       <Select value={skillType} onChange={(e) => setSkillType(e.target.value)} label="Type">
+                         <MenuItem value="teach">Teach</MenuItem>
+                         <MenuItem value="learn">Learn</MenuItem>
+                       </Select>
+                     </FormControl>
+                     <Button variant="contained" onClick={addSkill} disabled={loading || (!selectedSkill && !newSkillName.trim())}>
+                       Add Skill
+                     </Button>
+                   </Box>
+                 </Paper>
 
                 {(user.teach_skills || user.learn_skills) && (
                   <Paper sx={{ p: 2 }}>

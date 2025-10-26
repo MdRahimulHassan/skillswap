@@ -37,6 +37,7 @@ func main() {
 	api.HandleFunc("/profile", handlers.GetProfileHandler(db)).Methods("GET")
 	api.HandleFunc("/profile", handlers.UpdateProfileHandler(db)).Methods("PUT")
 	api.HandleFunc("/skills", handlers.GetSkillsHandler(db)).Methods("GET")
+	api.HandleFunc("/skills", handlers.AddSkillHandler(db)).Methods("POST")
 	api.HandleFunc("/user-skills", handlers.AddUserSkillHandler(db)).Methods("POST")
 	api.HandleFunc("/matches", handlers.GetMatchesHandler(db)).Methods("GET")
 	api.HandleFunc("/matches/{id}/accept", handlers.AcceptMatchHandler(db)).Methods("POST")

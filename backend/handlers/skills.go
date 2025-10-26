@@ -26,6 +26,35 @@ func GetSkillsHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+func AddSkillHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Name string `json:"name"`
+		}
+		json.NewDecoder(r.Body).Decode(&req)
+		if req.Name == "" {
+			http.Error(w, "Skill name is required", http.StatusBadRequest)
+			return
+		}
+		// Check if skill already exists
+		var existingID int
+		err := db.QueryRow("SELECT id FROM skills WHERE name = $1", req.Name).Scan(&existingID)
+		if err == nil {
+			// Skill exists, return it
+			json.NewEncoder(w).Encode(map[string]interface{}{"id": existingID, "name": req.Name})
+			return
+		}
+		// Insert new skill
+		var newID int
+		err = db.QueryRow("INSERT INTO skills (name) VALUES ($1) RETURNING id", req.Name).Scan(&newID)
+		if err != nil {
+			http.Error(w, "Error adding skill", http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]interface{}{"id": newID, "name": req.Name})
+	}
+}
+
 func AddUserSkillHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := r.Header.Get("user_id")
