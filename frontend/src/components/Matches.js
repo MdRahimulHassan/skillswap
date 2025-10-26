@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Typography, Box, Grid, Card, CardContent, CardActions, Button, Avatar, Chip, Alert, CircularProgress, TextField, FormControl, InputLabel, Select, MenuItem, InputAdornment, Rating, IconButton } from '@mui/material';
+import { Typography, Box, Grid, Card, CardContent, CardActions, Button, Avatar, Chip, Alert, CircularProgress, TextField, FormControl, InputLabel, Select, MenuItem, InputAdornment, Rating, IconButton, Paper } from '@mui/material';
 import { LocationOn, Work, Star, Message, Person, FilterList } from '@mui/icons-material';
 
 function Matches() {
