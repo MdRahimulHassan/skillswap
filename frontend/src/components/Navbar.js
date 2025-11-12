@@ -1,7 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box, Avatar, Menu, MenuItem, IconButton, Badge, useMediaQuery, useTheme } from '@mui/material';
-import { School, Notifications, AccountCircle, ExitToApp, Settings, Person } from '@mui/icons-material';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  Avatar,
+  Menu,
+  MenuItem,
+  IconButton,
+  Badge,
+  useMediaQuery,
+  useTheme
+} from '@mui/material';
+import {
+  School,
+  Notifications,
+  AccountCircle,
+  ExitToApp,
+  Settings,
+  Person,
+  Chat,
+   Group,
+} from '@mui/icons-material'; 
 
 function Navbar() {
   const navigate = useNavigate();
@@ -14,7 +36,6 @@ function Navbar() {
 
   useEffect(() => {
     if (token) {
-      // Fetch user data for avatar
       fetchUserProfile();
     }
   }, [token]);
@@ -22,7 +43,7 @@ function Navbar() {
   const fetchUserProfile = async () => {
     try {
       const res = await fetch('http://localhost:8080/api/profile', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       setUser(data);
@@ -46,13 +67,13 @@ function Navbar() {
   };
 
   const getInitials = (name) => {
-    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+    return name ? name.split(' ').map((n) => n[0]).join('').toUpperCase() : 'U';
   };
 
   return (
     <AppBar position="static" elevation={2} sx={{ backgroundColor: '#1976d2' }}>
       <Toolbar>
-        {/* Logo and Brand */}
+        {/* Logo */}
         <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
           <School sx={{ mr: 1, fontSize: 32 }} />
           <Typography
@@ -63,7 +84,7 @@ function Navbar() {
               textDecoration: 'none',
               color: 'inherit',
               fontWeight: 'bold',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             SkillSwap
@@ -75,10 +96,12 @@ function Navbar() {
             {/* Desktop Navigation */}
             {!isMobile && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Button color="inherit" component={Link} to="/matches" startIcon={<Person />}>
-                  Matches
-                </Button>
-                <Button color="inherit" component={Link} to="/messages" startIcon={<Notifications />}>
+               <Button color="inherit" component={Link} to="/matches" startIcon={<Group />}>
+  Matches
+</Button>
+
+                <Button color="inherit" component={Link} to="/messages" startIcon={<Chat />}>
+                  {/* ✅ Changed Notifications → Chat */}
                   Messages
                 </Button>
                 <Button color="inherit" component={Link} to="/admin" startIcon={<Settings />}>
@@ -113,11 +136,13 @@ function Navbar() {
             {isMobile && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <IconButton color="inherit" component={Link} to="/matches">
-                  <Person />
-                </IconButton>
+  <Group />
+</IconButton>
+
                 <IconButton color="inherit" component={Link} to="/messages">
+                  {/* ✅ Changed to Chat icon */}
                   <Badge badgeContent={notifications} color="error">
-                    <Notifications />
+                    <Chat />
                   </Badge>
                 </IconButton>
                 <IconButton
