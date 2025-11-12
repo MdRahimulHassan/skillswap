@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Box, Paper, TextField, Button, Avatar, Grid, List, ListItem, ListItemAvatar, ListItemText, Divider, IconButton, InputAdornment } from '@mui/material';
+import {
+  Typography, Box, Paper, TextField, Button, Avatar, Grid,
+  List, ListItem, ListItemAvatar, ListItemText, IconButton,
+  InputAdornment, Divider
+} from '@mui/material';
 import { Send, Search, MoreVert } from '@mui/icons-material';
 
 function Messages() {
@@ -9,7 +13,6 @@ function Messages() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // Mock data for conversations
     const mockConversations = [
       {
         id: 1,
@@ -37,245 +40,293 @@ function Messages() {
       }
     ];
     setConversations(mockConversations);
-    if (mockConversations.length > 0) {
-      setSelectedConversation(mockConversations[0]);
-    }
+    setSelectedConversation(mockConversations[0]);
   }, []);
 
-  const getInitials = (name) => {
-    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
-  };
+  const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
 
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
-    const diffInHours = (now - date) / (1000 * 60 * 60);
-
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
+    const diff = (now - date) / (1000 * 60 * 60);
+    return diff < 24
+      ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
   const handleSendMessage = () => {
-    if (newMessage.trim() && selectedConversation) {
-      const message = {
-        id: Date.now(),
-        text: newMessage,
-        sender: 'You',
-        timestamp: new Date().toISOString()
-      };
+    if (!newMessage.trim() || !selectedConversation) return;
+    const message = {
+      id: Date.now(),
+      text: newMessage,
+      sender: 'You',
+      timestamp: new Date().toISOString()
+    };
 
-      const updatedConversations = conversations.map(conv => {
-        if (conv.id === selectedConversation.id) {
-          return {
-            ...conv,
-            messages: [...conv.messages, message],
-            lastMessage: newMessage,
-            timestamp: new Date().toISOString(),
-            unread: 0
-          };
-        }
-        return conv;
-      });
-
-      setConversations(updatedConversations);
-      setSelectedConversation(prev => ({
-        ...prev,
-        messages: [...prev.messages, message],
-        lastMessage: newMessage,
-        timestamp: new Date().toISOString(),
-        unread: 0
-      }));
-      setNewMessage('');
-    }
+    const updatedConversations = conversations.map(c =>
+      c.id === selectedConversation.id
+        ? { ...c, messages: [...c.messages, message], lastMessage: newMessage, timestamp: new Date().toISOString(), unread: 0 }
+        : c
+    );
+    setConversations(updatedConversations);
+    setSelectedConversation(prev => ({
+      ...prev,
+      messages: [...prev.messages, message],
+      lastMessage: newMessage,
+      timestamp: new Date().toISOString(),
+      unread: 0
+    }));
+    setNewMessage('');
   };
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredConversations = conversations.filter(c =>
+    c.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <Box sx={{ height: 'calc(100vh - 200px)' }}>
-      <Typography variant="h4" component="h1" gutterBottom className="page-title">
-        Messages
-      </Typography>
+    <Box sx={{
+      display: 'flex',
+      height: 'calc(100vh - 100px)',
+      backgroundColor: '#f0f2f5',
+      borderRadius: 2,
+      overflow: 'hidden'
+    }}>
+      {/* Left Sidebar (Chats List) */}
+      <Paper
+        elevation={1}
+        sx={{
+          width: { xs: '100%', md: '30%' },
+          display: 'flex',
+          flexDirection: 'column',
+          borderRight: '1px solid #e0e0e0'
+        }}
+      >
+        <Box sx={{ p: 2, borderBottom: '1px solid #ddd' }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search Messenger"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search color="action" />
+                </InputAdornment>
+              ),
+              sx: { borderRadius: 5, backgroundColor: '#f5f6f7' }
+            }}
+          />
+        </Box>
 
-      <Grid container sx={{ height: 'calc(100vh - 280px)' }}>
-        {/* Conversations List */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <List sx={{ flexGrow: 1, overflowY: 'auto' }}>
+          {filteredConversations.map(conv => (
+            <ListItem
+              key={conv.id}
+              button
+              selected={selectedConversation?.id === conv.id}
+              onClick={() => setSelectedConversation(conv)}
+              sx={{
+                px: 2,
+                py: 1.5,
+                backgroundColor:
+                  selectedConversation?.id === conv.id ? '#e7f3ff' : 'inherit',
+                '&:hover': { backgroundColor: '#f0f2f5' },
+                transition: '0.2s'
+              }}
+            >
+              <ListItemAvatar>
+                <Avatar sx={{ bgcolor: '#1877f2' }}>{getInitials(conv.user.name)}</Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography sx={{ fontWeight: 600 }}>{conv.user.name}</Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      {formatTime(conv.timestamp)}
+                    </Typography>
+                  </Box>
+                }
+                secondary={
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {conv.lastMessage}
+                  </Typography>
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+
+      {/* Chat Area */}
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        {selectedConversation ? (
+          <>
+            {/* Header */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                px: 3,
+                py: 2,
+                borderBottom: '1px solid #ddd',
+                backgroundColor: 'white'
+              }}
+            >
+              <Avatar sx={{ bgcolor: '#1877f2', mr: 2 }}>
+                {getInitials(selectedConversation.user.name)}
+              </Avatar>
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  {selectedConversation.user.name}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {selectedConversation.user.email}
+                </Typography>
+              </Box>
+              <IconButton>
+                <MoreVert />
+              </IconButton>
+            </Box>
+
+            {/* Messages */}
+            <Box
+              sx={{
+                flexGrow: 1,
+                p: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                overflowY: 'auto',
+                background: 'linear-gradient(180deg, #f0f2f5 0%, #ffffff 100%)',
+                backgroundSize: 'contain'
+              }}
+            >
+              {selectedConversation.messages.map((msg) => (
+                <Box
+                  key={msg.id}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: msg.sender === 'You' ? 'row-reverse' : 'row',
+                    mb: 2
+                  }}
+                >
+                  {msg.sender !== 'You' && (
+                    <Avatar sx={{ bgcolor: '#1877f2', mr: 1, alignSelf: 'flex-end' }}>
+                      {getInitials(msg.sender)}
+                    </Avatar>
+                  )}
+                  <Box
+                    sx={{
+                      maxWidth: '70%',
+                      p: 1.5,
+                      borderRadius: 3,
+                      backgroundColor: msg.sender === 'You' ? '#0084ff' : '#e4e6eb',
+                      color: msg.sender === 'You' ? 'white' : 'black',
+                      boxShadow: 1
+                    }}
+                  >
+                    <Typography variant="body2">{msg.text}</Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        mt: 0.5,
+                        textAlign: msg.sender === 'You' ? 'right' : 'left',
+                        opacity: 0.7
+                      }}
+                    >
+                      {formatTime(msg.timestamp)}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+
+            {/* Input */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                p: 2,
+                borderTop: '1px solid #ddd',
+                backgroundColor: 'white'
+              }}
+            >
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Search conversations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search color="action" />
-                    </InputAdornment>
-                  ),
+                placeholder="Aa"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                sx={{
+                  mr: 1,
+                  '& .MuiInputBase-root': {
+                    borderRadius: 5,
+                    backgroundColor: '#f0f2f5'
+                  }
                 }}
               />
+              <Button
+  variant="contained"
+  onClick={handleSendMessage}
+  disabled={!newMessage.trim()}
+  sx={{
+    minWidth: 48,
+    width: 48,
+    height: 48,
+    borderRadius: '50%',
+    backgroundColor: '#1877f2',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+    transition: 'background-color 0.2s ease, transform 0.1s ease',
+    '&:hover': {
+      backgroundColor: '#166fe5',
+      transform: 'scale(1.05)'
+    },
+    '&:disabled': {
+      backgroundColor: '#cfd8e0',
+      color: '#fff'
+    }
+  }}
+>
+  <Send sx={{ fontSize: 22 }} />
+</Button>
+
             </Box>
-
-            <List sx={{ flexGrow: 1, overflow: 'auto' }}>
-              {filteredConversations.map((conversation) => (
-                <React.Fragment key={conversation.id}>
-                  <ListItem
-                    button
-                    selected={selectedConversation?.id === conversation.id}
-                    onClick={() => setSelectedConversation(conversation)}
-                    sx={{ py: 1.5 }}
-                  >
-                    <ListItemAvatar>
-                      <Avatar style={{ backgroundColor: '#1976d2' }}>
-                        {getInitials(conversation.user.name)}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: conversation.unread > 0 ? 'bold' : 'normal' }}>
-                            {conversation.user.name}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {formatTime(conversation.timestamp)}
-                          </Typography>
-                        </Box>
-                      }
-                      secondary={
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            sx={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              fontWeight: conversation.unread > 0 ? 'bold' : 'normal'
-                            }}
-                          >
-                            {conversation.lastMessage}
-                          </Typography>
-                          {conversation.unread > 0 && (
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  backgroundColor: '#1976d2',
-                                  color: 'white',
-                                  px: 1,
-                                  py: 0.2,
-                                  borderRadius: 10,
-                                  fontSize: '0.7rem'
-                                }}
-                              >
-                                {conversation.unread}
-                              </Typography>
-                            </Box>
-                          )}
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                  <Divider />
-                </React.Fragment>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
-
-        {/* Chat Area */}
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            {selectedConversation ? (
-              <>
-                {/* Chat Header */}
-                <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center' }}>
-                  <Avatar sx={{ mr: 2 }} style={{ backgroundColor: '#1976d2' }}>
-                    {getInitials(selectedConversation.user.name)}
-                  </Avatar>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6">{selectedConversation.user.name}</Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      {selectedConversation.user.email}
-                    </Typography>
-                  </Box>
-                  <IconButton>
-                    <MoreVert />
-                  </IconButton>
-                </Box>
-
-                {/* Messages */}
-                <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2, display: 'flex', flexDirection: 'column' }}>
-                  {selectedConversation.messages.map((message) => (
-                    <Box
-                      key={message.id}
-                      sx={{
-                        mb: 1,
-                        alignSelf: message.sender === 'You' ? 'flex-end' : 'flex-start',
-                        maxWidth: '70%'
-                      }}
-                    >
-                      <Paper
-                        sx={{
-                          p: 1.5,
-                          backgroundColor: message.sender === 'You' ? '#1976d2' : '#f5f5f5',
-                          color: message.sender === 'You' ? 'white' : 'text.primary'
-                        }}
-                      >
-                        <Typography variant="body2">{message.text}</Typography>
-                      </Paper>
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5, ml: 1 }}>
-                        {formatTime(message.timestamp)}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-
-                {/* Message Input */}
-                <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      placeholder="Type your message..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="contained"
-                      onClick={handleSendMessage}
-                      disabled={!newMessage.trim()}
-                      sx={{ minWidth: 48, height: 40 }}
-                    >
-                      <Send />
-                    </Button>
-                  </Box>
-                </Box>
-              </>
-            ) : (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                <Typography variant="h6" color="textSecondary">
-                  Select a conversation to start messaging
-                </Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
+          </>
+        ) : (
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#f0f2f5'
+            }}
+          >
+            <Typography color="textSecondary">
+              Select a conversation to start chatting
+            </Typography>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 }
