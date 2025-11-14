@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - SkillSwap</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<!-- 🌟 NAVBAR -->
+<div class="navbar">
+    <div class="logo">SkillSwap</div>
+
+    <div class="hamburger" onclick="toggleMenu()">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+    <div class="nav-links" id="navLinks">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="#">Messages</a>
+        <a href="#">My Skills</a>
+        <a href="#">Find Skills</a>
+        <a href="login.html">Logout</a>
+    </div>
+
+    <button class="profile-btn">My Profile</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+    <h2>Dashboard</h2>
+
+    <!-- STAT CARDS -->
+    <div class="cards">
+        <div class="card">
+            <h3>Skills Offered</h3>
+            <p id="skillsOffered">3</p>
+        </div>
+
+        <div class="card">
+            <h3>Skills Requested</h3>
+            <p id="skillsRequested">1</p>
+        </div>
+
+        <div class="card">
+            <h3>Messages</h3>
+            <p id="messages">12</p>
+        </div>
+    </div>
+
+    <!-- RECENT MESSAGES -->
+    <div class="section">
+        <h3>Recent Messages</h3>
+
+        <div class="item">💬 John: “Can you teach me Python?”</div>
+        <div class="item">💬 Sarah: “Interested in your UI/UX skill!”</div>
+        <div class="item">💬 Mike: “Let’s schedule our skill swap.”</div>
+    </div>
+
+</div>
+
+<script>
+function toggleMenu() {
+    document.getElementById("navLinks").classList.toggle("mobile-open");
+}
+</script>
+
+</body>
+</html>

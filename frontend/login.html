@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - SkillSwap</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="auth-container">
+    <h2>Welcome Back</h2>
+
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+
+    <button class="btn-primary" onclick="login()">Login</button>
+
+    <p class="switch-text">
+        Don't have an account?
+        <a href="signup.html">Sign Up</a>
+    </p>
+</div>
+
+<script>
+async function login() {
+    const res = await fetch("http://localhost:8080/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value
+        })
+    });
+
+    alert( res.text());
+    if (res.ok) {
+    window.location.href = "dashboard.html";
+}
+
+}
+</script>
+
+</body>
+</html>
