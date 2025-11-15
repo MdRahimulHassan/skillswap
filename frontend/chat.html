@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>SkillSwap Chat</title>
+  <link rel="stylesheet" href="css/chat.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="me">You: <span id="meId"></span></div>
+      <div id="chatList" class="chat-list"></div>
+    </aside>
+
+    <main class="chat-main">
+      <header class="chat-header">
+        <div id="chatHeader">Select a conversation</div>
+        <div class="actions">
+          <input id="fileInput" type="file" style="display:none"/>
+          <button id="uploadBtn">📎</button>
+        </div>
+      </header>
+
+      <section id="messages" class="messages"></section>
+
+      <footer class="composer">
+        <input id="messageInput" placeholder="Type a message..." />
+        <button id="sendBtn">Send</button>
+      </footer>
+    </main>
+  </div>
+
+  <script>const API_BASE = "http://localhost:8080/api";</script>
+  <script src="chat.js"></script>
+</body>
+</html>

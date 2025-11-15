@@ -12,6 +12,14 @@ func main() {
 
 	http.HandleFunc("/api/signup", cors(handlers.Signup))
 	http.HandleFunc("/api/login", cors(handlers.Login))
+	http.HandleFunc("/api/ws", cors(handlers.HandleWebSocket))
+http.HandleFunc("/api/chats", cors(handlers.GetChatList))
+http.HandleFunc("/api/history", cors(handlers.GetHistory))
+http.HandleFunc("/api/upload", cors(handlers.UploadFile))
+http.HandleFunc("/api/file", cors(handlers.FileInfo))
+// Serve files
+http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+
 
 	log.Println("Backend running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
