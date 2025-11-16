@@ -1,6 +1,25 @@
-// Simple connection: replace 'me' with your logged-in user id (from server-side)
-const me = 1;               // ===> set dynamically in production
-document.getElementById('meId').innerText = me;
+// Authentication check and dynamic user ID
+function checkAuthentication() {
+    const authenticated = localStorage.getItem("authenticated");
+    const userId = localStorage.getItem("user_id");
+    const username = localStorage.getItem("username");
+    
+    if (!authenticated || !userId) {
+        window.location.href = "login.html";
+        return null;
+    }
+    
+    return { userId: parseInt(userId), username };
+}
+
+const auth = checkAuthentication();
+if (!auth) {
+    // Will redirect to login
+    throw new Error("User not authenticated");
+}
+
+const me = auth.userId;
+document.getElementById('meId').innerText = auth.username;
 
 let currentChat = null;
 let ws = null;
