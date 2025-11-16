@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Dashboard - SkillSwap</title>
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/unified.css">
     <script src="js/api-config.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
@@ -24,6 +24,8 @@
         <a href="chat.html">Messages</a>
         <a href="my-skills.html">My Skills</a>
         <a href="find-skills.html">Find Skills</a>
+        <a href="find-resources.html">Resources</a>
+        <a href="p2p-dashboard.html">P2P Network</a>
         <a href="#" onclick="logout()">Logout</a>
     </div>
 
@@ -36,20 +38,35 @@
     <h2>Dashboard</h2>
 
     <!-- STAT CARDS -->
-    <div class="cards">
-        <div class="card">
+    <div class="stats-grid">
+        <div class="stat-card">
             <h3>Skills Offered</h3>
-            <p id="skillsOffered">3</p>
+            <p class="stat-value" id="skillsOffered">3</p>
         </div>
 
-        <div class="card">
+        <div class="stat-card">
             <h3>Skills Requested</h3>
-            <p id="skillsRequested">1</p>
+            <p class="stat-value" id="skillsRequested">1</p>
         </div>
 
-        <div class="card">
+        <div class="stat-card">
             <h3>Messages</h3>
-            <p id="messages">12</p>
+            <p class="stat-value" id="messages">12</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>P2P Resources</h3>
+            <p class="stat-value" id="p2pResources">0</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Active Seeders</h3>
+            <p class="stat-value" id="activeSeeders">0</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Active Leechers</h3>
+            <p class="stat-value" id="activeLeechers">0</p>
         </div>
     </div>
 
@@ -77,16 +94,31 @@ const loadDashboardStats = withErrorBoundary(withRetry(async () => {
 
     loading.showGlobalWithTimeout('Loading dashboard...');
     
+    // Load regular dashboard stats
     const stats = await apiCall(`${API_CONFIG.ENDPOINTS.DASHBOARD_STATS}?user_id=${userId}`);
+    
+    // Load P2P statistics
+    let p2pStats = { total_resources: 0, active_seeders: 0, active_leechers: 0 };
+    try {
+        p2pStats = await apiCall('/api/p2p/statistics');
+    } catch (error) {
+        console.warn('Failed to load P2P stats:', error);
+    }
     
     // Update stat cards with validation
     const skillsOfferedEl = document.getElementById('skillsOffered');
     const skillsRequestedEl = document.getElementById('skillsRequested');
     const messagesEl = document.getElementById('messages');
+    const p2pResourcesEl = document.getElementById('p2pResources');
+    const activeSeedersEl = document.getElementById('activeSeeders');
+    const activeLeechersEl = document.getElementById('activeLeechers');
     
     if (skillsOfferedEl) skillsOfferedEl.textContent = stats.skills_offered || 0;
     if (skillsRequestedEl) skillsRequestedEl.textContent = stats.skills_requested || 0;
     if (messagesEl) messagesEl.textContent = stats.messages || 0;
+    if (p2pResourcesEl) p2pResourcesEl.textContent = p2pStats.total_resources || 0;
+    if (activeSeedersEl) activeSeedersEl.textContent = p2pStats.active_seeders || 0;
+    if (activeLeechersEl) activeLeechersEl.textContent = p2pStats.active_leechers || 0;
     
     // Load recent messages
     await loadRecentMessages();

@@ -22,12 +22,27 @@ const API_CONFIG = {
         SKILLS_REMOVE: '/skills/remove',
         SKILLS_SEARCH: '/skills/search',
         SKILLS_USER: '/skills/user',
+        // P2P Endpoints
+        P2P_RESOURCE_CREATE: '/p2p/resource/create',
+        P2P_RESOURCES: '/p2p/resources',
+        P2P_RESOURCE: (id) => `/p2p/resource/${id}`,
+        P2P_SWARM_STATS: (id) => `/p2p/swarm/${id}/stats`,
+        P2P_SWARM_PEERS: (id) => `/p2p/swarm/${id}/peers`,
+        P2P_ANNOUNCE: '/p2p/announce',
+        P2P_PIECE: (resourceId, pieceIndex) => `/p2p/piece/${resourceId}/${pieceIndex}`,
         WS: () => {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                 ? 'localhost:8080'
                 : window.location.host;
             return `${protocol}//${host}/api/ws`;
+        },
+        P2P_WS: () => {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'localhost:8080'
+                : window.location.host;
+            return `${protocol}//${host}/api/p2p/ws`;
         }
     }
 };

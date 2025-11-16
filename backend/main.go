@@ -5,16 +5,20 @@ import (
 	"main/db"
 	"main/handlers"
 	"net/http"
+	"strings"
 )
 
 func main() {
 	db.Connect()
 
+	// Start Unified WebSocket manager
+	handlers.StartUnifiedManager()
+
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/static"))))
 
 	http.HandleFunc("/api/signup", cors(handlers.Signup))
 	http.HandleFunc("/api/login", cors(handlers.Login))
-	http.HandleFunc("/api/ws", cors(handlers.HandleWebSocket))
+	http.HandleFunc("/api/ws", cors(handlers.HandleUnifiedWebSocket))
 	http.HandleFunc("/api/chats", cors(handlers.GetChatList))
 	http.HandleFunc("/api/history", cors(handlers.GetHistory))
 	http.HandleFunc("/api/upload", cors(handlers.UploadFile))
@@ -31,6 +35,25 @@ func main() {
 	http.HandleFunc("/api/skills/remove", cors(handlers.RemoveSkill))
 	http.HandleFunc("/api/skills/search", cors(handlers.SearchSkills))
 	http.HandleFunc("/api/skills/user", cors(handlers.GetUserSkills))
+
+	// P2P endpoints
+	http.HandleFunc("/api/p2p/resource/create", cors(handlers.CreateResource))
+	http.HandleFunc("/api/p2p/resources", cors(handlers.GetResources))
+	http.HandleFunc("/api/p2p/resource/", cors(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			handlers.GetResourceDetails(w, r)
+		}
+	}))
+	http.HandleFunc("/api/p2p/swarm/", cors(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" && strings.HasSuffix(r.URL.Path, "/stats") {
+			handlers.GetSwarmStats(w, r)
+		} else if r.Method == "GET" && strings.HasSuffix(r.URL.Path, "/peers") {
+			handlers.GetSwarmPeers(w, r)
+		}
+	}))
+	http.HandleFunc("/api/p2p/announce", cors(handlers.AnnouncePeer))
+	http.HandleFunc("/api/p2p/piece/", cors(handlers.GetPiece))
+	http.HandleFunc("/api/p2p/statistics", cors(handlers.GetP2PStatistics))
 
 	// Serve HTML pages
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +94,7 @@ func main() {
 
 	// Serve files
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+	http.Handle("/p2p_resources/", http.StripPrefix("/p2p_resources/", http.FileServer(http.Dir("./p2p_resources"))))
 
 	log.Println("Backend running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
