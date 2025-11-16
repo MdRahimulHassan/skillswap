@@ -305,7 +305,96 @@ function validateForm(formId, rules = {}) {
     };
 }
 
+// Global error boundary
+window.addEventListener('error', function(event) {
+    console.error('Global error caught:', event.error);
+    handleError(event.error, 'Application Error');
+});
+
+// Unhandled promise rejection handler
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+    handleError(event.reason, 'Promise Rejection');
+    event.preventDefault();
+});
+
+// Enhanced error boundary for async operations
+function withErrorBoundary(fn, context = 'Operation') {
+    return async (...args) => {
+        try {
+            return await fn(...args);
+        } catch (error) {
+            handleError(error, context);
+            throw error;
+        }
+    };
+}
+
+// Retry mechanism for failed operations
+async function withRetry(fn, maxRetries = 3, delay = 1000, context = 'Operation') {
+    let lastError;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            lastError = error;
+            console.warn(`${context} attempt ${attempt} failed:`, error);
+            
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, delay * attempt));
+            }
+        }
+    }
+    
+    throw lastError;
+}
+
+// Enhanced loading states with timeout
+class EnhancedLoadingManager extends LoadingManager {
+    showWithTimeout(elementId, text = 'Loading...', timeout = 30000) {
+        this.show(elementId, text);
+        
+        // Auto-hide after timeout to prevent infinite loading
+        setTimeout(() => {
+            const element = document.getElementById(elementId);
+            if (element && this.loadingElements.has(elementId)) {
+                this.hide(elementId);
+                showToast('Operation timed out', 'warning');
+            }
+        }, timeout);
+    }
+    
+    showGlobalWithTimeout(text = 'Loading...', timeout = 30000) {
+        this.showGlobal(text);
+        
+        // Auto-hide after timeout
+        setTimeout(() => {
+            const globalLoader = document.getElementById('global-loader');
+            if (globalLoader) {
+                this.hideGlobal();
+                showToast('Operation timed out', 'warning');
+            }
+        }, timeout);
+    }
+}
+
+// Replace loading instance with enhanced version
+const enhancedLoading = new EnhancedLoadingManager();
+
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { showToast, loading, handleError, validateForm };
+    module.exports = { 
+        showToast, 
+        loading: enhancedLoading, 
+        handleError, 
+        validateForm,
+        withErrorBoundary,
+        withRetry
+    };
 }
+
+// Make enhanced functions globally available
+window.loading = enhancedLoading;
+window.withErrorBoundary = withErrorBoundary;
+window.withRetry = withRetry;

@@ -34,6 +34,9 @@ async function loadProfile() {
             });
             document.getElementById("joinDate").textContent = joinDate;
         }
+        
+        // Update online status
+        updateProfileOnlineStatus(userId);
 
         // Update skills sections
         updateSkillsSection('skillsHave', user.skills_have);
@@ -395,10 +398,66 @@ function triggerPhotoUpload() {
 
 function handlePhotoUpload(event) {
     const file = event.target.files[0];
-    if (file) {
-        // For now, just show a message. In a real implementation, you'd upload this to the server
-        showToast(`Photo "${file.name}" selected. Upload functionality coming soon!`, 'info');
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        showToast('Please select an image file', 'error');
+        return;
     }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('File size must be less than 5MB', 'error');
+        return;
+    }
+
+    const userId = auth.getUserId();
+    if (!userId) {
+        showToast('User not authenticated', 'error');
+        return;
+    }
+
+    loading.showGlobal('Uploading profile photo...');
+
+    const formData = new FormData();
+    formData.append('user_id', userId);
+    formData.append('photo', file);
+
+    fetch(`${API_CONFIG.BASE_URL}/api/profile/photo`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Upload failed: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(result => {
+        if (result.status === 'success') {
+            showToast('Profile photo updated successfully!', 'success');
+            
+            // Update the profile photo in the UI
+            const profilePhoto = document.getElementById('profilePhoto');
+            if (profilePhoto) {
+                profilePhoto.src = result.photo_url;
+            }
+            
+            // Reload profile to get updated data
+            loadProfile();
+        } else {
+            showToast(result.message || 'Upload failed', 'error');
+        }
+    })
+    .catch(error => {
+        handleError(error, 'Photo Upload');
+    })
+    .finally(() => {
+        loading.hideGlobal();
+        // Clear file input
+        event.target.value = '';
+    });
 }
 
 // Close modals when clicking outside
@@ -411,6 +470,35 @@ window.onclick = function(event) {
     }
     if (event.target === skillModal) {
         closeSkillModal();
+    }
+}
+
+// Update profile online status
+async function updateProfileOnlineStatus(userId) {
+    try {
+        const statusData = await apiCall(`${API_CONFIG.ENDPOINTS.USERS_ONLINE}?ids=${userId}`);
+        if (statusData && statusData.length > 0) {
+            const isOnline = statusData[0].online;
+            const statusElement = document.getElementById('onlineStatus');
+            if (statusElement) {
+                const statusDot = statusElement.querySelector('.status-dot');
+                const statusText = statusElement.querySelector('.status-text');
+                
+                if (isOnline) {
+                    statusDot.style.background = '#28a745';
+                    statusText.textContent = 'Online';
+                    statusElement.style.background = 'rgba(40, 167, 69, 0.1)';
+                    statusElement.style.borderColor = 'rgba(40, 167, 69, 0.2)';
+                } else {
+                    statusDot.style.background = '#6c757d';
+                    statusText.textContent = 'Offline';
+                    statusElement.style.background = 'rgba(108, 117, 125, 0.1)';
+                    statusElement.style.borderColor = 'rgba(108, 117, 125, 0.2)';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error updating profile online status:', error);
     }
 }
 

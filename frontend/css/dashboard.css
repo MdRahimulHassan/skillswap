@@ -81,6 +81,7 @@ body {
         border-radius: 10px;
         width: 150px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
     }
 
     .nav-links.mobile-open {
@@ -89,6 +90,29 @@ body {
 
     .hamburger {
         display: flex;
+    }
+    
+    .main {
+        padding: 20px 15px;
+    }
+    
+    .cards {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .card {
+        min-width: auto;
+        padding: 20px;
+    }
+    
+    .section {
+        margin-top: 30px;
+    }
+    
+    .item {
+        padding: 12px;
+        font-size: 14px;
     }
 }
 
