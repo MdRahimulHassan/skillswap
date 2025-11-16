@@ -23,6 +23,12 @@ func main() {
 	http.HandleFunc("/api/profile/update", cors(handlers.UpdateProfile))
 	http.HandleFunc("/api/users/search", cors(handlers.SearchUsers))
 
+	// Skills endpoints
+	http.HandleFunc("/api/skills/add", cors(handlers.AddSkill))
+	http.HandleFunc("/api/skills/remove", cors(handlers.RemoveSkill))
+	http.HandleFunc("/api/skills/search", cors(handlers.SearchSkills))
+	http.HandleFunc("/api/skills/user", cors(handlers.GetUserSkills))
+
 	// Serve HTML pages
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
@@ -47,6 +53,14 @@ func main() {
 		}
 		if r.URL.Path == "/chat" {
 			http.ServeFile(w, r, "./frontend/chat.html")
+			return
+		}
+		if r.URL.Path == "/my-skills" {
+			http.ServeFile(w, r, "./frontend/my-skills.html")
+			return
+		}
+		if r.URL.Path == "/find-skills" {
+			http.ServeFile(w, r, "./frontend/find-skills.html")
 			return
 		}
 		http.NotFound(w, r)

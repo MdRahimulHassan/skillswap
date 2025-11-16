@@ -5,8 +5,12 @@ services:
     build: ./backend
     container_name: skillswap_backend
     restart: always
-    env_file:
-      - .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=skillswap
     ports:
       - "8080:8080"
     depends_on:

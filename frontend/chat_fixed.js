@@ -482,8 +482,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Auto-refresh chat list
         setInterval(loadChats, 10000);
         
-        // Auto-open first chat if available
+        // Auto-open first chat if available or target user from find skills
         setTimeout(async () => {
+            // Check if there's a target user from find skills page
+            const targetUser = localStorage.getItem('chat_target_user');
+            if (targetUser) {
+                try {
+                    const target = JSON.parse(targetUser);
+                    localStorage.removeItem('chat_target_user');
+                    openChat(target.user_id);
+                    showToast(`Connected with ${target.name}`, 'success');
+                    return;
+                } catch (error) {
+                    console.error('Error parsing target user:', error);
+                    localStorage.removeItem('chat_target_user');
+                }
+            }
+            
+            // Otherwise, open first available chat
             try {
                 const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHATS}?user_id=${me}`);
                 if (response.ok) {

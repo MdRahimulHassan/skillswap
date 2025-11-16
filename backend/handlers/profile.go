@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"main/db"
@@ -44,7 +45,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
+		if err == sql.ErrNoRows {
 			http.Error(w, "User not found", http.StatusNotFound)
 		} else {
 			log.Printf("Database error getting profile: %v", err)

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Skills - SkillSwap</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        .skills-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .skills-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .skills-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .skills-header h2 {
+            color: #4e54c8;
+            margin: 0;
+        }
+        
+        .add-skill-btn {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .add-skill-btn:hover {
+            background: #3f45a5;
+        }
+        
+        .skill-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4e54c8;
+            transition: transform 0.2s;
+        }
+        
+        .skill-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .skill-name {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .remove-skill-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s;
+        }
+        
+        .remove-skill-btn:hover {
+            background: #c82333;
+        }
+        
+        .no-skills {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+        
+        .add-skill-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .skills-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navbar">
+        <div class="logo">SkillSwap</div>
+
+        <div class="hamburger" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+
+        <div class="nav-links" id="navLinks">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="profile.html">Profile</a>
+            <a href="chat.html">Messages</a>
+            <a href="my-skills.html" class="active">My Skills</a>
+            <a href="find-skills.html">Find Skills</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+
+        <button class="profile-btn" id="profileBtn">My Profile</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <h2>My Skills</h2>
+        <p>Manage the skills you have and the skills you want to learn.</p>
+
+        <div class="skills-container">
+            <!-- Skills I Have -->
+            <div class="skills-section">
+                <div class="skills-header">
+                    <h2>🎯 Skills I Have</h2>
+                    <button class="add-skill-btn" onclick="openAddSkillModal('have')">+ Add Skill</button>
+                </div>
+                <div id="skillsHaveList">
+                    <div class="no-skills">No skills added yet</div>
+                </div>
+            </div>
+
+            <!-- Skills I Want -->
+            <div class="skills-section">
+                <div class="skills-header">
+                    <h2>🎓 Skills I Want</h2>
+                    <button class="add-skill-btn" onclick="openAddSkillModal('want')">+ Add Skill</button>
+                </div>
+                <div id="skillsWantList">
+                    <div class="no-skills">No skills added yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Skill Modal -->
+    <div id="addSkillModal" class="add-skill-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Skill</h3>
+                <button class="close-modal" onclick="closeAddSkillModal()">&times;</button>
+            </div>
+            <form id="addSkillForm" onsubmit="event.preventDefault(); addSkill();">
+                <div class="form-group">
+                    <label for="skillInput">Skill Name</label>
+                    <input type="text" id="skillInput" placeholder="e.g., JavaScript, Design, Marketing" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeAddSkillModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Skill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentSkillType = '';
+        let userSkills = {
+            skills_have: [],
+            skills_want: []
+        };
+
+        // Initialize page
+        function initMySkills() {
+            if (!auth.requireAuth()) return;
+            
+            const username = auth.getUsername();
+            const profileBtn = document.getElementById("profileBtn");
+            if (profileBtn) {
+                profileBtn.textContent = username;
+            }
+            
+            loadUserSkills();
+        }
+
+        // Load user's skills
+        async function loadUserSkills() {
+            try {
+                loading.showGlobal('Loading skills...');
+                const userId = auth.getUserId();
+                const response = await apiCall(`${API_CONFIG.ENDPOINTS.SKILLS_USER}?user_id=${userId}`);
+                
+                userSkills = response;
+                renderSkills();
+            } catch (error) {
+                handleError(error, 'Load Skills');
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Render skills in the UI
+        function renderSkills() {
+            renderSkillsList('skillsHaveList', userSkills.skills_have, 'have');
+            renderSkillsList('skillsWantList', userSkills.skills_want, 'want');
+        }
+
+        function renderSkillsList(containerId, skills, skillType) {
+            const container = document.getElementById(containerId);
+            
+            if (!skills || skills.length === 0) {
+                container.innerHTML = '<div class="no-skills">No skills added yet</div>';
+                return;
+            }
+            
+            container.innerHTML = skills.map(skill => `
+                <div class="skill-item">
+                    <span class="skill-name">${escapeHtml(skill)}</span>
+                    <button class="remove-skill-btn" onclick="removeSkill('${skillType}', '${escapeHtml(skill)}')">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        // Open add skill modal
+        function openAddSkillModal(skillType) {
+            currentSkillType = skillType;
+            const modal = document.getElementById('addSkillModal');
+            const title = document.getElementById('modalTitle');
+            
+            title.textContent = skillType === 'have' ? 'Add Skill I Have' : 'Add Skill I Want';
+            document.getElementById('skillInput').value = '';
+            modal.style.display = 'block';
+            
+            // Focus on input
+            setTimeout(() => {
+                document.getElementById('skillInput').focus();
+            }, 100);
+        }
+
+        // Close add skill modal
+        function closeAddSkillModal() {
+            document.getElementById('addSkillModal').style.display = 'none';
+            currentSkillType = '';
+        }
+
+        // Add new skill
+        async function addSkill() {
+            const skillInput = document.getElementById('skillInput');
+            const skill = skillInput.value.trim();
+            
+            if (!skill) {
+                showToast('Please enter a skill name', 'error');
+                return;
+            }
+            
+            try {
+                loading.showGlobal('Adding skill...');
+                const userId = auth.getUserId();
+                
+                const response = await apiCall(API_CONFIG.ENDPOINTS.SKILLS_ADD, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        user_id: userId,
+                        skill: skill,
+                        skill_type: currentSkillType
+                    })
+                });
+                
+                if (response.success) {
+                    showToast(response.message, 'success');
+                    closeAddSkillModal();
+                    loadUserSkills(); // Reload skills
+                } else {
+                    showToast(response.message, 'error');
+                }
+            } catch (error) {
+                handleError(error, 'Add Skill');
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Remove skill
+        async function removeSkill(skillType, skill) {
+            if (!confirm(`Are you sure you want to remove "${skill}" from your ${skillType} skills?`)) {
+                return;
+            }
+            
+            try {
+                loading.showGlobal('Removing skill...');
+                const userId = auth.getUserId();
+                
+                const response = await apiCall(API_CONFIG.ENDPOINTS.SKILLS_REMOVE, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        user_id: userId,
+                        skill: skill,
+                        skill_type: skillType
+                    })
+                });
+                
+                if (response.success) {
+                    showToast(response.message, 'success');
+                    loadUserSkills(); // Reload skills
+                } else {
+                    showToast(response.message, 'error');
+                }
+            } catch (error) {
+                handleError(error, 'Remove Skill');
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Utility function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('addSkillModal');
+            if (event.target === modal) {
+                closeAddSkillModal();
+            }
+        }
+
+        // Mobile menu toggle
+        function toggleMenu() {
+            const navLinks = document.getElementById("navLinks");
+            if (navLinks) {
+                navLinks.classList.toggle("mobile-open");
+            }
+        }
+
+        // Logout function
+        function logout() {
+            auth.logout();
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initMySkills);
+    </script>
+</body>
+</html>

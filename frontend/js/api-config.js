@@ -15,6 +15,10 @@ const API_CONFIG = {
         UPLOAD: '/upload',
         FILE: '/file',
         USERS_SEARCH: '/users/search',
+        SKILLS_ADD: '/skills/add',
+        SKILLS_REMOVE: '/skills/remove',
+        SKILLS_SEARCH: '/skills/search',
+        SKILLS_USER: '/skills/user',
         WS: () => {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'

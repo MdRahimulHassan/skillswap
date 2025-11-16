@@ -28,7 +28,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req LoginRequest
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
 
 	var userID int
 	var username string
