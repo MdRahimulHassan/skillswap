@@ -3,6 +3,10 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    profile_photo TEXT,
+    skills_have TEXT,
+    skills_want TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 );
 

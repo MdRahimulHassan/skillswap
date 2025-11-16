@@ -3,6 +3,9 @@
 <head>
     <title>Dashboard - SkillSwap</title>
     <link rel="stylesheet" href="css/dashboard.css">
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
 </head>
 <body>
 
@@ -62,31 +65,16 @@
 </div>
 
 <script>
-// Authentication check
-function checkAuthentication() {
-    const authenticated = localStorage.getItem("authenticated");
-    const username = localStorage.getItem("username");
-    
-    if (!authenticated || !username) {
-        window.location.href = "login.html";
-        return null;
-    }
-    
-    return username;
-}
-
-// Logout function
+// Logout function (auth.js handles the rest)
 function logout() {
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("username");
-    localStorage.removeItem("authenticated");
-    window.location.href = "login.html";
+    auth.logout();
 }
 
 // Initialize dashboard
 function initDashboard() {
-    const username = checkAuthentication();
-    if (!username) return;
+    if (!auth.requireAuth()) return;
+    
+    const username = auth.getUsername();
     
     // Update profile button with username
     const profileBtn = document.getElementById("profileBtn");
@@ -104,7 +92,10 @@ function initDashboard() {
 }
 
 function toggleMenu() {
-    document.getElementById("navLinks").classList.toggle("mobile-open");
+    const navLinks = document.getElementById("navLinks");
+    if (navLinks) {
+        navLinks.classList.toggle("mobile-open");
+    }
 }
 
 // Run initialization when page loads

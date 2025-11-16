@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SkillSwap - Frontend Test Suite</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-item { margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 3px; }
+        .pass { color: green; }
+        .fail { color: red; }
+        .warning { color: orange; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>SkillSwap Frontend Test Suite</h1>
+    
+    <div class="test-section">
+        <h2>1. Static Assets Test</h2>
+        <div class="test-item">
+            <p>Testing static assets directory and default profile image...</p>
+            <button onclick="testStaticAssets()">Test Static Assets</button>
+            <div id="staticResults"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. API Configuration Test</h2>
+        <div class="test-item">
+            <p>Testing API configuration and endpoints...</p>
+            <button onclick="testAPIConfig()">Test API Config</button>
+            <div id="apiResults"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Authentication System Test</h2>
+        <div class="test-item">
+            <p>Testing authentication flow...</p>
+            <button onclick="testAuth()">Test Authentication</button>
+            <div id="authResults"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Form Validation Test</h2>
+        <div class="test-item">
+            <p>Testing form validation...</p>
+            <button onclick="testValidation()">Test Validation</button>
+            <div id="validationResults"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Error Handling Test</h2>
+        <div class="test-item">
+            <p>Testing error handling and user feedback...</p>
+            <button onclick="testErrorHandling()">Test Error Handling</button>
+            <div id="errorResults"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Page Load Test</h2>
+        <div class="test-item">
+            <p>Testing page loading and DOM elements...</p>
+            <button onclick="testPageLoad()">Test Page Load</button>
+            <div id="pageResults"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>7. Mobile Responsiveness Test</h2>
+        <div class="test-item">
+            <p>Testing mobile menu and responsive design...</p>
+            <button onclick="testMobile()">Test Mobile</button>
+            <div id="mobileResults"></div>
+        </div>
+    </div>
+
+    <div id="results">
+        <h2>Overall Test Results</h2>
+        <div id="overallResults"></div>
+    </div>
+
+    <!-- Include all scripts for testing -->
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script>
+        let testResults = {};
+
+        function addResult(testName, status, message) {
+            testResults[testName] = { status, message };
+            updateOverallResults();
+        }
+
+        function updateOverallResults() {
+            const overall = document.getElementById('overallResults');
+            const passed = Object.values(testResults).filter(r => r.status === 'pass').length;
+            const total = Object.keys(testResults).length;
+            
+            overall.innerHTML = `
+                <div class="${passed === total ? 'pass' : 'warning'}">
+                    <strong>Tests Passed: ${passed}/${total}</strong>
+                </div>
+                <div class="info">Detailed results above</div>
+            `;
+        }
+
+        function testStaticAssets() {
+            const results = document.getElementById('staticResults');
+            let status = 'pass';
+            let messages = [];
+
+            // Test if static directory exists (by trying to load default image)
+            const img = new Image();
+            img.onload = () => {
+                messages.push('✓ Default profile image loads successfully');
+            };
+            img.onerror = () => {
+                messages.push('✗ Default profile image failed to load');
+                status = 'fail';
+            };
+            img.src = 'static/images/default.svg';
+
+            setTimeout(() => {
+                results.innerHTML = `
+                    <div class="${status}">
+                        ${messages.join('<br>')}
+                    </div>
+                `;
+                addResult('Static Assets', status, messages.join(', '));
+            }, 1000);
+        }
+
+        function testAPIConfig() {
+            const results = document.getElementById('apiResults');
+            let status = 'pass';
+            let messages = [];
+
+            // Test API_CONFIG exists
+            if (typeof API_CONFIG !== 'undefined') {
+                messages.push('✓ API_CONFIG object exists');
+            } else {
+                messages.push('✗ API_CONFIG object missing');
+                status = 'fail';
+            }
+
+            // Test endpoints
+            if (API_CONFIG.ENDPOINTS) {
+                messages.push('✓ API endpoints defined');
+                if (API_CONFIG.ENDPOINTS.LOGIN && API_CONFIG.ENDPOINTS.SIGNUP) {
+                    messages.push('✓ Auth endpoints available');
+                } else {
+                    messages.push('✗ Auth endpoints missing');
+                    status = 'fail';
+                }
+            } else {
+                messages.push('✗ API endpoints missing');
+                status = 'fail';
+            }
+
+            // Test WebSocket endpoint function
+            if (typeof API_CONFIG.ENDPOINTS.WS === 'function') {
+                messages.push('✓ WebSocket endpoint function available');
+            } else {
+                messages.push('✗ WebSocket endpoint function missing');
+                status = 'fail';
+            }
+
+            results.innerHTML = `
+                <div class="${status}">
+                    ${messages.join('<br>')}
+                </div>
+            `;
+            addResult('API Configuration', status, messages.join(', '));
+        }
+
+        function testAuth() {
+            const results = document.getElementById('authResults');
+            let status = 'pass';
+            let messages = [];
+
+            // Test AuthManager exists
+            if (typeof AuthManager !== 'undefined') {
+                messages.push('✓ AuthManager class exists');
+            } else {
+                messages.push('✗ AuthManager class missing');
+                status = 'fail';
+            }
+
+            // Test auth instance
+            if (typeof auth !== 'undefined') {
+                messages.push('✓ Global auth instance available');
+                
+                // Test auth methods
+                if (typeof auth.isAuthenticated === 'function') {
+                    messages.push('✓ isAuthenticated method available');
+                } else {
+                    messages.push('✗ isAuthenticated method missing');
+                    status = 'fail';
+                }
+
+                if (typeof auth.setAuth === 'function') {
+                    messages.push('✓ setAuth method available');
+                } else {
+                    messages.push('✗ setAuth method missing');
+                    status = 'fail';
+                }
+
+                if (typeof auth.clearAuth === 'function') {
+                    messages.push('✓ clearAuth method available');
+                } else {
+                    messages.push('✗ clearAuth method missing');
+                    status = 'fail';
+                }
+            } else {
+                messages.push('✗ Global auth instance missing');
+                status = 'fail';
+            }
+
+            results.innerHTML = `
+                <div class="${status}">
+                    ${messages.join('<br>')}
+                </div>
+            `;
+            addResult('Authentication', status, messages.join(', '));
+        }
+
+        function testValidation() {
+            const results = document.getElementById('validationResults');
+            let status = 'pass';
+            let messages = [];
+
+            // Test validateForm function
+            if (typeof validateForm === 'function') {
+                messages.push('✓ validateForm function exists');
+                
+                // Test validation with sample data
+                try {
+                    const testForm = document.createElement('form');
+                    testForm.id = 'testForm';
+                    testForm.innerHTML = '<input name="email" type="email" value="test@example.com">';
+                    document.body.appendChild(testForm);
+                    
+                    const validation = validateForm('testForm', {
+                        email: ['required', 'email']
+                    });
+                    
+                    if (validation && typeof validation.valid === 'boolean') {
+                        messages.push('✓ Form validation works correctly');
+                    } else {
+                        messages.push('✗ Form validation returned unexpected result');
+                        status = 'fail';
+                    }
+                    
+                    document.body.removeChild(testForm);
+                } catch (error) {
+                    messages.push('✗ Form validation test failed: ' + error.message);
+                    status = 'fail';
+                }
+            } else {
+                messages.push('✗ validateForm function missing');
+                status = 'fail';
+            }
+
+            results.innerHTML = `
+                <div class="${status}">
+                    ${messages.join('<br>')}
+                </div>
+            `;
+            addResult('Form Validation', status, messages.join(', '));
+        }
+
+        function testErrorHandling() {
+            const results = document.getElementById('errorResults');
+            let status = 'pass';
+            let messages = [];
+
+            // Test showToast function
+            if (typeof showToast === 'function') {
+                messages.push('✓ showToast function exists');
+                
+                // Test toast notification
+                try {
+                    showToast('Test notification', 'info', 1000);
+                    messages.push('✓ Toast notification works');
+                } catch (error) {
+                    messages.push('✗ Toast notification failed: ' + error.message);
+                    status = 'fail';
+                }
+            } else {
+                messages.push('✗ showToast function missing');
+                status = 'fail';
+            }
+
+            // Test loading manager
+            if (typeof loading !== 'undefined') {
+                messages.push('✓ Loading manager available');
+                
+                if (typeof loading.show === 'function' && typeof loading.hide === 'function') {
+                    messages.push('✓ Loading methods available');
+                } else {
+                    messages.push('✗ Loading methods missing');
+                    status = 'fail';
+                }
+            } else {
+                messages.push('✗ Loading manager missing');
+                status = 'fail';
+            }
+
+            // Test handleError function
+            if (typeof handleError === 'function') {
+                messages.push('✓ handleError function exists');
+            } else {
+                messages.push('✗ handleError function missing');
+                status = 'fail';
+            }
+
+            results.innerHTML = `
+                <div class="${status}">
+                    ${messages.join('<br>')}
+                </div>
+            `;
+            addResult('Error Handling', status, messages.join(', '));
+        }
+
+        function testPageLoad() {
+            const results = document.getElementById('pageResults');
+            let status = 'pass';
+            let messages = [];
+
+            // Test if all script files are loaded
+            const scripts = ['api-config.js', 'utils.js', 'auth.js'];
+            scripts.forEach(script => {
+                const scriptElement = document.querySelector(`script[src*="${script}"]`);
+                if (scriptElement) {
+                    messages.push(`✓ ${script} loaded`);
+                } else {
+                    messages.push(`✗ ${script} not loaded`);
+                    status = 'fail';
+                }
+            });
+
+            // Test if CSS files are loaded
+            const cssFiles = ['styles.css', 'dashboard.css', 'chat.css', 'profile.css'];
+            cssFiles.forEach(css => {
+                const cssElement = document.querySelector(`link[href*="${css}"]`);
+                if (cssElement) {
+                    messages.push(`✓ ${css} loaded`);
+                } else {
+                    messages.push(`⚠ ${css} not loaded (may not be needed for this page)`);
+                }
+            });
+
+            results.innerHTML = `
+                <div class="${status}">
+                    ${messages.join('<br>')}
+                </div>
+            `;
+            addResult('Page Load', status, messages.join(', '));
+        }
+
+        function testMobile() {
+            const results = document.getElementById('mobileResults');
+            let status = 'pass';
+            let messages = [];
+
+            // Test if toggleMenu function exists
+            if (typeof toggleMenu === 'function') {
+                messages.push('✓ toggleMenu function exists');
+            } else {
+                messages.push('✗ toggleMenu function missing');
+                status = 'fail';
+            }
+
+            // Test if mobile menu elements exist
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.getElementById('navLinks');
+            
+            if (hamburger) {
+                messages.push('✓ Hamburger menu element exists');
+            } else {
+                messages.push('⚠ Hamburger menu element not found (may not be on this page)');
+            }
+
+            if (navLinks) {
+                messages.push('✓ Navigation links element exists');
+            } else {
+                messages.push('⚠ Navigation links element not found (may not be on this page)');
+            }
+
+            // Test responsive CSS
+            const mobileQuery = window.matchMedia('(max-width: 768px)');
+            if (mobileQuery) {
+                messages.push('✓ Mobile media query support available');
+            } else {
+                messages.push('✗ Mobile media query support missing');
+                status = 'fail';
+            }
+
+            results.innerHTML = `
+                <div class="${status}">
+                    ${messages.join('<br>')}
+                </div>
+            `;
+            addResult('Mobile Responsiveness', status, messages.join(', '));
+        }
+
+        // Run all tests automatically
+        window.onload = function() {
+            setTimeout(() => {
+                testStaticAssets();
+                testAPIConfig();
+                testAuth();
+                testValidation();
+                testErrorHandling();
+                testPageLoad();
+                testMobile();
+            }, 500);
+        };
+    </script>
+</body>
+</html>

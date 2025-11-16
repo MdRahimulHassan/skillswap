@@ -1,32 +1,17 @@
-// Authentication check and dynamic user ID
-function checkAuthentication() {
-    const authenticated = localStorage.getItem("authenticated");
-    const userId = localStorage.getItem("user_id");
-    const username = localStorage.getItem("username");
-    
-    if (!authenticated || !userId) {
-        window.location.href = "login.html";
-        return null;
-    }
-    
-    return { userId: parseInt(userId), username };
-}
-
-const auth = checkAuthentication();
-if (!auth) {
-    // Will redirect to login
+// Authentication check
+if (!auth.requireAuth()) {
     throw new Error("User not authenticated");
 }
 
-const me = auth.userId;
-document.getElementById('meId').innerText = auth.username;
+const me = auth.getUserId();
+document.getElementById('meId').innerText = auth.getUsername();
 
 let currentChat = null;
 let ws = null;
 
 // connect websocket
 function connectWS() {
-  ws = new WebSocket(`ws://${location.hostname}:8080/api/ws?user_id=${me}`);
+  ws = new WebSocket(`${API_CONFIG.ENDPOINTS.WS()}?user_id=${me}`);
   ws.onopen = ()=> console.log('ws open');
   ws.onmessage = (ev)=> {
     const msg = JSON.parse(ev.data);
@@ -42,32 +27,41 @@ connectWS();
 
 // load chat list
 async function loadChats() {
-  const res = await fetch(`${API_BASE}/chats?user_id=${me}`);
-  const list = await res.json();
-  const el = document.getElementById('chatList');
-  el.innerHTML = '';
-  list.forEach(it => {
-    const d = document.createElement('div');
-    d.className = 'chat-item' + (currentChat===it.user_id ? ' active':'');
-    d.innerHTML = `<div><strong>User ${it.user_id}</strong><div class="meta">${it.is_file ? '[file]' : (it.last_msg||'')}</div></div>
-                   <div class="meta">${new Date(it.created_at).toLocaleString()}</div>`;
-    d.onclick = ()=> openChat(it.user_id);
-    el.appendChild(d);
-  });
+  try {
+    const list = await apiCall(`${API_CONFIG.ENDPOINTS.CHATS}?user_id=${me}`);
+    const el = document.getElementById('chatList');
+    el.innerHTML = '';
+    list.forEach(it => {
+      const d = document.createElement('div');
+      d.className = 'chat-item' + (currentChat===it.user_id ? ' active':'');
+      d.innerHTML = `<div><strong>User ${it.user_id}</strong><div class="meta">${it.is_file ? '[file]' : (it.last_msg||'')}</div></div>
+                     <div class="meta">${new Date(it.created_at).toLocaleString()}</div>`;
+      d.onclick = ()=> openChat(it.user_id);
+      el.appendChild(d);
+    });
+  } catch (error) {
+    handleError(error, 'Load Chats');
+  }
 }
 loadChats();
 setInterval(loadChats, 4000);
 
 // open chat: load history
 async function openChat(uid) {
-  currentChat = uid;
-  document.getElementById('chatHeader').innerText = 'Chat with User ' + uid;
-  const res = await fetch(`${API_BASE}/history?user1=${me}&user2=${uid}`);
-  const msgs = await res.json();
-  const container = document.getElementById('messages');
-  container.innerHTML = '';
-  msgs.forEach(m => appendMessage(m));
-  container.scrollTop = container.scrollHeight;
+  try {
+    loading.showGlobal('Loading chat history...');
+    currentChat = uid;
+    document.getElementById('chatHeader').innerText = 'Chat with User ' + uid;
+    const msgs = await apiCall(`${API_CONFIG.ENDPOINTS.HISTORY}?user1=${me}&user2=${uid}`);
+    const container = document.getElementById('messages');
+    container.innerHTML = '';
+    msgs.forEach(m => appendMessage(m));
+    container.scrollTop = container.scrollHeight;
+  } catch (error) {
+    handleError(error, 'Open Chat');
+  } finally {
+    loading.hideGlobal();
+  }
 }
 
 // append message object to UI
@@ -79,7 +73,7 @@ function appendMessage(m) {
   if (m.is_file) {
     // fetch file info to show link
     if (m.file_id) {
-      fetch(`${API_BASE}/file?id=${m.file_id}`)
+      apiCall(`${API_CONFIG.ENDPOINTS.FILE}?id=${m.file_id}`)
         .then(r=>r.json())
         .then(info=>{
           d.innerHTML = `📎 <a href="${location.origin}${info.url}" target="_blank">${info.filename}</a>
@@ -122,23 +116,51 @@ document.getElementById('sendBtn').addEventListener('click', ()=>{
 const fileInput = document.getElementById('fileInput');
 document.getElementById('uploadBtn').addEventListener('click', ()=> fileInput.click());
 fileInput.addEventListener('change', async (ev)=> {
-  if (!currentChat) { alert('Select a chat'); return; }
+  if (!currentChat) { 
+    showToast('Please select a chat first', 'warning'); 
+    return; 
+  }
   const f = ev.target.files[0];
   if (!f) return;
+  
+  // Validate file size (10MB limit)
+  if (f.size > 10 * 1024 * 1024) {
+    showToast('File size must be less than 10MB', 'error');
+    return;
+  }
+  
+  loading.showGlobal('Uploading file...');
   const form = new FormData();
   form.append('sender_id', me);
   form.append('receiver_id', currentChat);
   form.append('file', f);
 
-  const res = await fetch(`${API_BASE}/upload`, { method: 'POST', body: form });
-  const data = await res.json();
-  // server will send WS notification to both participants; chat list will refresh
-  console.log('uploaded', data);
+  try {
+    const data = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPLOAD}`, { 
+      method: 'POST', 
+      body: form 
+    });
+    
+    if (!data.ok) {
+      throw new Error('File upload failed');
+    }
+    
+    const result = await data.json();
+    showToast('File uploaded successfully!', 'success');
+    // server will send WS notification to both participants; chat list will refresh
+    console.log('uploaded', result);
+  } catch (error) {
+    handleError(error, 'File Upload');
+  } finally {
+    loading.hideGlobal();
+    // Clear file input
+    ev.target.value = '';
+  }
 });
 
 // helper to auto-open first chat if exists
 setTimeout(async ()=> {
-  const res = await fetch(`${API_BASE}/chats?user_id=${me}`);
+  const res = await apiCall(`${API_CONFIG.ENDPOINTS.CHATS}?user_id=${me}`);
   const list = await res.json();
   if (list.length && !currentChat) openChat(list[0].user_id);
 }, 600);

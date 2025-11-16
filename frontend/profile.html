@@ -2,49 +2,351 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SkillSwap Profile</title>
     <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-exchange-alt"></i>
+            <span>SkillSwap</span>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="chat.html"><i class="fas fa-comments"></i> Messages</a>
+            <a href="#" class="active"><i class="fas fa-user"></i> Profile</a>
+            <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+        <div class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </div>
+    </nav>
 
-<div class="main">
+    <!-- Main Content -->
+    <main class="profile-container">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading profile...</p>
+        </div>
 
-    <div class="card">
-        <img id="profilePhoto" class="avatar" src="/static/images/default.png">
+        <!-- Profile Content -->
+        <div id="profileContent" class="profile-content" style="display: none;">
+            <!-- Profile Header -->
+            <section class="profile-header">
+                <div class="profile-cover">
+                    <div class="profile-photo-container">
+                        <img id="profilePhoto" class="profile-photo" src="static/images/default.svg" alt="Profile Photo">
+                        <div class="photo-upload-overlay" onclick="triggerPhotoUpload()">
+                            <i class="fas fa-camera"></i>
+                            <span>Change Photo</span>
+                        </div>
+                        <input type="file" id="photoUpload" accept="image/*" style="display: none;" onchange="handlePhotoUpload(event)">
+                        <div class="online-status" id="onlineStatus">
+                            <span class="status-dot"></span>
+                            <span class="status-text">Online</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-info">
+                    <div class="profile-main">
+                        <h1 id="profileName">Loading...</h1>
+                        <p class="username">@<span id="profileUsername">loading</span></p>
+                        <p class="join-date">Member since <span id="joinDate">January 2024</span></p>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <button class="btn btn-primary" onclick="openEditModal()">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </button>
+                        <button class="btn btn-secondary" onclick="startChat()">
+                            <i class="fas fa-comment"></i> Message
+                        </button>
+                        <button class="btn btn-outline" onclick="shareProfile()">
+                            <i class="fas fa-share"></i> Share
+                        </button>
+                    </div>
+                </div>
+            </section>
 
-        <h2 id="name"></h2>
-        <p id="username" class="username"></p>
+            <!-- Stats Dashboard -->
+            <section class="stats-dashboard">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="exchangesCount">0</h3>
+                        <p>Skill Exchanges</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="ratingCount">4.8</h3>
+                        <p>Average Rating</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="conversationsCount">0</h3>
+                        <p>Active Conversations</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="responseRate">95%</h3>
+                        <p>Response Rate</p>
+                    </div>
+                </div>
+            </section>
 
-        <h3>Skills Offered</h3>
-        <p id="skillsHave"></p>
+            <!-- About Section -->
+            <section class="about-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-user-circle"></i> About</h2>
+                    <button class="edit-btn" onclick="editAbout()">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+                <div class="about-content">
+                    <div class="bio-section">
+                        <h3>Bio</h3>
+                        <p id="bioText" class="bio-text">No bio added yet.</p>
+                        <textarea id="bioEdit" class="bio-edit" style="display: none;" placeholder="Tell others about yourself and your skills..."></textarea>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div>
+                                <label>Location</label>
+                                <p id="userLocation">Not specified</p>
+                                <input type="text" id="locationEdit" class="info-edit" style="display: none;" placeholder="City, Country">
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <i class="fas fa-briefcase"></i>
+                            <div>
+                                <label>Availability</label>
+                                <p id="userAvailability">Available</p>
+                                <select id="availabilityEdit" class="info-edit" style="display: none;">
+                                    <option value="Available">Available</option>
+                                    <option value="Busy">Busy</option>
+                                    <option value="Away">Away</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <i class="fas fa-link"></i>
+                            <div>
+                                <label>LinkedIn</label>
+                                <p id="userLinkedIn">Not connected</p>
+                                <input type="url" id="linkedInEdit" class="info-edit" style="display: none;" placeholder="https://linkedin.com/in/username">
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <i class="fab fa-github"></i>
+                            <div>
+                                <label>GitHub</label>
+                                <p id="userGithub">Not connected</p>
+                                <input type="url" id="githubEdit" class="info-edit" style="display: none;" placeholder="https://github.com/username">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        <h3>Skills Wanted</h3>
-        <p id="skillsWant"></p>
+            <!-- Skills Section -->
+            <section class="skills-section">
+                <div class="skills-container">
+                    <div class="skills-column">
+                        <div class="section-header">
+                            <h2><i class="fas fa-graduation-cap"></i> Skills I Have</h2>
+                            <button class="add-skill-btn" onclick="openSkillModal('have')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="skillsHave" class="skills-list">
+                            <!-- Skills will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="skills-column">
+                        <div class="section-header">
+                            <h2><i class="fas fa-search"></i> Skills I Want</h2>
+                            <button class="add-skill-btn" onclick="openSkillModal('want')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="skillsWant" class="skills-list">
+                            <!-- Skills will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        <button id="editBtn" class="profile-btn">Edit Profile</button>
-        <button id="contactBtn" class="profile-btn btn-secondary">Contact</button>
+            <!-- Recent Activity -->
+            <section class="activity-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> Recent Activity</h2>
+                </div>
+                <div id="activityList" class="activity-list">
+                    <!-- Activity items will be populated here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Edit Profile Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Profile</h2>
+                <button class="close-btn" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="editName">Full Name</label>
+                    <input type="text" id="editName" placeholder="Enter your full name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editBio">Bio</label>
+                    <textarea id="editBio" rows="4" placeholder="Tell others about yourself..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editLocation">Location</label>
+                    <input type="text" id="editLocation" placeholder="City, Country">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editAvailability">Availability</label>
+                    <select id="editAvailability">
+                        <option value="Available">Available</option>
+                        <option value="Busy">Busy</option>
+                        <option value="Away">Away</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editLinkedIn">LinkedIn</label>
+                    <input type="url" id="editLinkedIn" placeholder="https://linkedin.com/in/username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editGithub">GitHub</label>
+                    <input type="url" id="editGithub" placeholder="https://github.com/username">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+            </div>
+        </div>
     </div>
 
-    <div id="editForm" class="card hidden">
+    <!-- Skill Modal -->
+    <div id="skillModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="skillModalTitle">Add Skill</h2>
+                <button class="close-btn" onclick="closeSkillModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="skillName">Skill Name</label>
+                    <input type="text" id="skillName" placeholder="e.g., JavaScript, Design, Marketing">
+                    <div id="skillSuggestions" class="skill-suggestions">
+                        <!-- Suggestions will appear here -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="skillLevel">Proficiency Level</label>
+                    <select id="skillLevel">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="expert">Expert</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="skillDescription">Description (Optional)</label>
+                    <textarea id="skillDescription" rows="3" placeholder="Brief description of your experience..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSkillModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSkill()">Add Skill</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Edit Form (for profile.js compatibility) -->
+    <div id="editForm" class="hidden" style="display: none; margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px;">
         <h3>Edit Profile</h3>
-
-        <label>Name</label>
-        <input id="editName">
-
-        <label>Profile Photo URL</label>
-        <input id="editPhoto">
-
-        <label>Skills You Have (comma separated)</label>
-        <input id="editSkillsHave">
-
-        <label>Skills You Want (comma separated)</label>
-        <input id="editSkillsWant">
-
-        <button id="saveBtn" class="profile-btn">Save</button>
+        <div style="margin-bottom: 15px;">
+            <label for="editName" style="display: block; margin-bottom: 5px; font-weight: bold;">Name:</label>
+            <input type="text" id="editName" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label for="editPhoto" style="display: block; margin-bottom: 5px; font-weight: bold;">Profile Photo URL:</label>
+            <input type="text" id="editPhoto" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label for="editSkillsHave" style="display: block; margin-bottom: 5px; font-weight: bold;">Skills I Have:</label>
+            <input type="text" id="editSkillsHave" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label for="editSkillsWant" style="display: block; margin-bottom: 5px; font-weight: bold;">Skills I Want:</label>
+            <input type="text" id="editSkillsWant" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        <div style="margin-top: 20px;">
+            <button id="saveBtn" class="btn btn-primary" style="margin-right: 10px;">Save Changes</button>
+            <button id="editBtn" class="btn btn-secondary" onclick="document.getElementById('editForm').classList.add('hidden')">Cancel</button>
+        </div>
     </div>
 
-</div>
+    <!-- Edit Button (for profile.js compatibility) -->
+    <button id="editBtn" class="btn btn-primary" style="margin: 10px 0;">
+        <i class="fas fa-edit"></i> Edit Profile
+    </button>
 
-<script src="profile.js"></script>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span id="toastMessage">Success!</span>
+        </div>
+    </div>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="profile.js"></script>
 </body>
 </html>
