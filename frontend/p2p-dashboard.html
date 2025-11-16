@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>P2P Dashboard - SkillSwap</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .dashboard-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #4e54c8;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .swarm-container {
+            height: 400px;
+            border: 1px solid #e6e6ef;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .swarm-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .control-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+        
+        .control-group select,
+        .control-group button {
+            padding: 0.5rem;
+            border: 1px solid #e6e6ef;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .control-group button {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .control-group button:hover {
+            background: #3f45a5;
+        }
+        
+        .downloads-section {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .download-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #e6e6ef;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s;
+        }
+        
+        .download-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .download-info {
+            flex: 1;
+        }
+        
+        .download-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .download-progress {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #28a745;
+            transition: width 0.3s ease;
+        }
+        
+        .download-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .download-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s;
+        }
+        
+        .btn-pause {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-cancel {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-resume {
+            background: #28a745;
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4e54c8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .resource-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .resource-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #e6e6ef;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .resource-item:hover {
+            background: #f8f9ff;
+            border-color: #4e54c8;
+        }
+        
+        .resource-item.selected {
+            background: #eef2ff;
+            border-color: #4e54c8;
+        }
+        
+        .resource-info {
+            flex: 1;
+        }
+        
+        .resource-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .resource-stats {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .swarm-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+        }
+        
+        .swarm-stat {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            background: #f8f9ff;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .swarm-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/p2p-client.js"></script>
+    <script src="js/download-manager.js"></script>
+    <script src="js/swarm-visualizer.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navbar">
+        <div class="logo">SkillSwap P2P</div>
+
+        <div class="hamburger" onclick="toggleMenu()">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+
+        <div class="nav-links" id="navLinks">
+            <a href="dashboard.html" class="active">P2P Dashboard</a>
+            <a href="profile.html">Profile</a>
+            <a href="chat.html">Messages</a>
+            <a href="my-skills.html">My Skills</a>
+            <a href="find-resources.html">Find Resources</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+
+        <button class="profile-btn" id="profileBtn">My Profile</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <h2>P2P Network Dashboard</h2>
+        <p>Real-time monitoring of peer-to-peer file sharing activity.</p>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="activePeers">0</div>
+                <div class="stat-label">Active Peers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalDownloads">0</div>
+                <div class="stat-label">Active Downloads</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalUploads">0</div>
+                <div class="stat-label">Active Uploads</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="networkSpeed">0 KB/s</div>
+                <div class="stat-label">Network Speed</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Swarm Visualization -->
+            <div class="dashboard-section">
+                <h3 class="section-title">🌐 Network Swarm</h3>
+                <div class="swarm-container" id="swarmContainer">
+                    <div class="no-data">Select a resource to visualize swarm</div>
+                </div>
+                <div class="swarm-controls">
+                    <div class="control-group">
+                        <label>Resource:</label>
+                        <select id="resourceSelect">
+                            <option value="">Select a resource</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <button onclick="refreshSwarm()">🔄 Refresh</button>
+                        <button onclick="toggleAnimation()">⏸️ Pause</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Downloads -->
+            <div class="dashboard-section">
+                <h3 class="section-title">📥 Active Downloads</h3>
+                <div class="downloads-section" id="downloadsSection">
+                    <div class="no-data">No active downloads</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Resources -->
+        <div class="dashboard-section">
+            <h3 class="section-title">📚 My Shared Resources</h3>
+            <div class="resource-list" id="myResources">
+                <div class="no-data">Loading your resources...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let p2pClient = null;
+        let downloadManager = null;
+        let swarmVisualizer = null;
+        let myResources = [];
+        let animationRunning = true;
+
+        // Initialize dashboard
+        function initP2PDashboard() {
+            if (!auth.requireAuth()) return;
+            
+            const username = auth.getUsername();
+            const profileBtn = document.getElementById("profileBtn");
+            if (profileBtn) {
+                profileBtn.textContent = username;
+            }
+            
+            // Initialize P2P components
+            p2pClient = new P2PClient(auth.getUserId(), API_CONFIG.ENDPOINTS.P2P_WS());
+            downloadManager = new DownloadManager(p2pClient);
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Load initial data
+            loadMyResources();
+            updateStatistics();
+            
+            // Start periodic updates
+            setInterval(updateStatistics, 5000);
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // P2P Client events
+            p2pClient.on('peer-connected', (data) => {
+                console.log('Peer connected:', data);
+                updateStatistics();
+            });
+            
+            p2pClient.on('peer-disconnected', (data) => {
+                console.log('Peer disconnected:', data);
+                updateStatistics();
+            });
+            
+            // Download Manager events
+            downloadManager.on('download-started', (data) => {
+                updateDownloadsList();
+                updateStatistics();
+            });
+            
+            downloadManager.on('download-progress', (data) => {
+                updateDownloadProgress(data.resourceId, data.downloadInfo);
+                updateStatistics();
+            });
+            
+            downloadManager.on('download-completed', (data) => {
+                updateDownloadsList();
+                updateStatistics();
+                showToast(`Download completed: ${data.downloadInfo.title}`, 'success');
+            });
+            
+            downloadManager.on('download-failed', (data) => {
+                updateDownloadsList();
+                updateStatistics();
+                showToast(`Download failed: ${data.downloadInfo.title}`, 'error');
+            });
+        }
+
+        // Load user's shared resources
+        async function loadMyResources() {
+            try {
+                const resources = await apiCall(`${API_CONFIG.BASE_URL}/api/p2p/resources?uploader_id=${auth.getUserId()}`);
+                myResources = resources;
+                renderMyResources();
+                updateResourceSelect();
+            } catch (error) {
+                console.error('Failed to load resources:', error);
+                document.getElementById('myResources').innerHTML = '<div class="no-data">Failed to load resources</div>';
+            }
+        }
+
+        // Render my resources
+        function renderMyResources() {
+            const container = document.getElementById('myResources');
+            
+            if (!myResources || myResources.length === 0) {
+                container.innerHTML = '<div class="no-data">No shared resources yet</div>';
+                return;
+            }
+            
+            container.innerHTML = myResources.map(resource => `
+                <div class="resource-item" onclick="selectResource(${resource.id})">
+                    <div class="resource-info">
+                        <div class="resource-title">${escapeHtml(resource.title)}</div>
+                        <div class="resource-stats">
+                            📊 ${resource.seeders || 0} seeders • 📥 ${resource.leechers || 0} leechers • 💾 ${formatFileSize(resource.file_size)}
+                        </div>
+                    </div>
+                    <div class="swarm-stats">
+                        <div class="swarm-stat">Seeding</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update resource select dropdown
+        function updateResourceSelect() {
+            const select = document.getElementById('resourceSelect');
+            select.innerHTML = '<option value="">Select a resource</option>';
+            
+            myResources.forEach(resource => {
+                const option = document.createElement('option');
+                option.value = resource.id;
+                option.textContent = resource.title;
+                select.appendChild(option);
+            });
+        }
+
+        // Select resource for visualization
+        function selectResource(resourceId) {
+            // Update UI
+            document.querySelectorAll('.resource-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // Update select dropdown
+            document.getElementById('resourceSelect').value = resourceId;
+            
+            // Initialize swarm visualization
+            initializeSwarmVisualization(resourceId);
+        }
+
+        // Initialize swarm visualization
+        function initializeSwarmVisualization(resourceId) {
+            const container = document.getElementById('swarmContainer');
+            container.innerHTML = '';
+            
+            swarmVisualizer = new SwarmVisualizer('swarmContainer', p2pClient);
+            swarmVisualizer.selectResource(resourceId);
+        }
+
+        // Update downloads list
+        function updateDownloadsList() {
+            const container = document.getElementById('downloadsSection');
+            const activeDownloads = downloadManager.getActiveDownloads();
+            
+            if (!activeDownloads || activeDownloads.length === 0) {
+                container.innerHTML = '<div class="no-data">No active downloads</div>';
+                return;
+            }
+            
+            container.innerHTML = activeDownloads.map(download => `
+                <div class="download-item">
+                    <div class="download-info">
+                        <div class="download-title">${escapeHtml(download.title)}</div>
+                        <div class="download-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${download.progress}%"></div>
+                            </div>
+                            <span>${Math.round(download.progress)}%</span>
+                        </div>
+                        <div class="download-stats">
+                            📊 ${download.peers.size} peers • 📈 ${formatFileSize(download.downloadSpeed)}/s
+                        </div>
+                    </div>
+                    <div class="download-actions">
+                        ${download.status === 'downloading' ? 
+                            `<button class="btn-small btn-pause" onclick="pauseDownload(${download.resourceId})">⏸️</button>` :
+                            `<button class="btn-small btn-resume" onclick="resumeDownload(${download.resourceId})">▶️</button>`
+                        }
+                        <button class="btn-small btn-cancel" onclick="cancelDownload(${download.resourceId})">❌</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update download progress
+        function updateDownloadProgress(resourceId, downloadInfo) {
+            const progressElement = document.querySelector(`#downloadsSection .download-item:nth-child(${resourceId}) .progress-fill`);
+            if (progressElement) {
+                progressElement.style.width = `${downloadInfo.progress}%`;
+            }
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const stats = downloadManager.getStatistics();
+            
+            document.getElementById('activePeers').textContent = p2pClient ? p2pClient.peers.size : 0;
+            document.getElementById('totalDownloads').textContent = stats.activeDownloads;
+            document.getElementById('totalUploads').textContent = stats.activeDownloads; // Same for now
+            document.getElementById('networkSpeed').textContent = formatFileSize(stats.averageSpeed) + '/s';
+        }
+
+        // Control functions
+        function pauseDownload(resourceId) {
+            downloadManager.pauseDownload(resourceId);
+        }
+
+        function resumeDownload(resourceId) {
+            downloadManager.resumeDownload(resourceId);
+        }
+
+        function cancelDownload(resourceId) {
+            if (confirm('Are you sure you want to cancel this download?')) {
+                downloadManager.cancelDownload(resourceId);
+            }
+        }
+
+        function refreshSwarm() {
+            if (swarmVisualizer) {
+                swarmVisualizer.refreshSwarm();
+            }
+        }
+
+        function toggleAnimation() {
+            if (swarmVisualizer) {
+                swarmVisualizer.toggleAnimation();
+            }
+        }
+
+        // Utility functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Mobile menu toggle
+        function toggleMenu() {
+            const navLinks = document.getElementById("navLinks");
+            if (navLinks) {
+                navLinks.classList.toggle("mobile-open");
+            }
+        }
+
+        // Logout function
+        function logout() {
+            if (p2pClient) {
+                p2pClient.disconnect();
+            }
+            if (downloadManager) {
+                downloadManager.cleanup();
+            }
+            auth.logout();
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initP2PDashboard);
+    </script>
+</body>
+</html>
