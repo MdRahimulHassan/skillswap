@@ -3,7 +3,7 @@
 
 class P2PClient {
     constructor(userId, trackerUrl) {
-        this.userId = userId;
+        this.userId = userId || (auth ? auth.getUserId() : null);
         this.trackerUrl = trackerUrl;
         this.peers = new Map(); // Connected peers: peerId -> PeerConnection
         this.torrents = new Map(); // Active torrents: resourceId -> Torrent
@@ -563,7 +563,49 @@ class P2PClient {
     }
 }
 
+// Static method to create P2P client with auth integration
+P2PClient.createWithAuth = function(trackerUrl = null) {
+    // Check if user is authenticated
+    if (!auth || !auth.isAuthenticated()) {
+        throw new Error('User must be authenticated to use P2P client');
+    }
+    
+    const userId = auth.getUserId();
+    const url = trackerUrl || `ws://${window.location.host}/api/p2p/ws`;
+    
+    return new P2PClient(userId, url);
+};
+
+// Global P2P client instance
+let globalP2PClient = null;
+
+// Get or create global P2P client
+function getP2PClient() {
+    if (!globalP2PClient) {
+        try {
+            globalP2PClient = P2PClient.createWithAuth();
+        } catch (error) {
+            console.error('Failed to create P2P client:', error);
+            return null;
+        }
+    }
+    return globalP2PClient;
+}
+
+// Initialize P2P client when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    if (auth && auth.isAuthenticated()) {
+        // Initialize P2P client in background
+        setTimeout(() => {
+            const client = getP2PClient();
+            if (client) {
+                console.log('P2P client initialized with auth');
+            }
+        }, 1000);
+    }
+});
+
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { P2PClient };
+    module.exports = { P2PClient, getP2PClient };
 }

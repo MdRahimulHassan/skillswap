@@ -625,3 +625,55 @@ func getSwarmStats(resourceID int) SwarmStats {
 	stats.TotalSize = fileSize
 	return stats
 }
+
+// GetP2PStatistics returns overall P2P system statistics
+func GetP2PStatistics(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Get total resources count
+	var totalResources int
+	err := db.DB.QueryRow("SELECT COUNT(*) FROM resources").Scan(&totalResources)
+	if err != nil {
+		http.Error(w, "Failed to get resources count", http.StatusInternalServerError)
+		return
+	}
+
+	// Get active seeders count
+	var activeSeeders int
+	err = db.DB.QueryRow(`
+		SELECT COUNT(DISTINCT user_id) 
+		FROM peer_participation 
+		WHERE status = 'seeding' AND last_announce > NOW() - INTERVAL '1 hour'
+	`).Scan(&activeSeeders)
+	if err != nil {
+		activeSeeders = 0 // Default to 0 if query fails
+	}
+
+	// Get active leechers count
+	var activeLeechers int
+	err = db.DB.QueryRow(`
+		SELECT COUNT(DISTINCT user_id) 
+		FROM peer_participation 
+		WHERE status = 'leeching' AND last_announce > NOW() - INTERVAL '1 hour'
+	`).Scan(&activeLeechers)
+	if err != nil {
+		activeLeechers = 0 // Default to 0 if query fails
+	}
+
+	// Get total downloads
+	var totalDownloads int
+	err = db.DB.QueryRow("SELECT COALESCE(SUM(download_count), 0) FROM resources").Scan(&totalDownloads)
+	if err != nil {
+		totalDownloads = 0
+	}
+
+	stats := map[string]interface{}{
+		"total_resources": totalResources,
+		"active_seeders":  activeSeeders,
+		"active_leechers": activeLeechers,
+		"total_downloads": totalDownloads,
+		"last_updated":    time.Now().Format(time.RFC3339),
+	}
+
+	json.NewEncoder(w).Encode(stats)
+}

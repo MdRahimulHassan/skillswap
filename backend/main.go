@@ -11,14 +11,14 @@ import (
 func main() {
 	db.Connect()
 
-	// Start P2P WebSocket manager
-	handlers.StartP2PManager()
+	// Start Unified WebSocket manager
+	handlers.StartUnifiedManager()
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/static")))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/static"))))
 
 	http.HandleFunc("/api/signup", cors(handlers.Signup))
 	http.HandleFunc("/api/login", cors(handlers.Login))
-	http.HandleFunc("/api/ws", cors(handlers.HandleWebSocket))
+	http.HandleFunc("/api/ws", cors(handlers.HandleUnifiedWebSocket))
 	http.HandleFunc("/api/chats", cors(handlers.GetChatList))
 	http.HandleFunc("/api/history", cors(handlers.GetHistory))
 	http.HandleFunc("/api/upload", cors(handlers.UploadFile))
@@ -53,7 +53,7 @@ func main() {
 	}))
 	http.HandleFunc("/api/p2p/announce", cors(handlers.AnnouncePeer))
 	http.HandleFunc("/api/p2p/piece/", cors(handlers.GetPiece))
-	http.HandleFunc("/api/p2p/ws", cors(handlers.HandleP2PWebSocket))
+	http.HandleFunc("/api/p2p/statistics", cors(handlers.GetP2PStatistics))
 
 	// Serve HTML pages
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

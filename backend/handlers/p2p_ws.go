@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,24 +21,24 @@ const (
 
 // P2PMessage represents a P2P WebSocket message
 type P2PMessage struct {
-	Type       string      `json:"type"`
-	UserID     int         `json:"user_id"`
-	ResourceID int         `json:"resource_id,omitempty"`
-	PieceIndex int         `json:"piece_index,omitempty"`
-	PieceData  []byte      `json:"piece_data,omitempty"`
-	PeerList   []PeerInfo  `json:"peer_list,omitempty"`
-	SwarmStats SwarmStats  `json:"swarm_stats,omitempty"`
-	Data       any      `json:"data,omitempty"`
-	Timestamp  time.Time   `json:"timestamp"`
+	Type       string     `json:"type"`
+	UserID     int        `json:"user_id"`
+	ResourceID int        `json:"resource_id,omitempty"`
+	PieceIndex int        `json:"piece_index,omitempty"`
+	PieceData  []byte     `json:"piece_data,omitempty"`
+	PeerList   []PeerInfo `json:"peer_list,omitempty"`
+	SwarmStats SwarmStats `json:"swarm_stats,omitempty"`
+	Data       any        `json:"data,omitempty"`
+	Timestamp  time.Time  `json:"timestamp"`
 }
 
 // P2PClient represents a P2P WebSocket client
 type P2PClient struct {
-	userID     int
-	conn       *websocket.Conn
-	send       chan P2PMessage
-	resources  map[int]bool // Resources this client is participating in
-	lastPing   time.Time
+	userID    int
+	conn      *websocket.Conn
+	send      chan P2PMessage
+	resources map[int]bool // Resources this client is participating in
+	lastPing  time.Time
 }
 
 // P2PManager manages P2P WebSocket connections
@@ -75,7 +73,7 @@ func (m *P2PManager) run() {
 		case client := <-m.register:
 			m.clients[client.userID] = client
 			log.Printf("P2P client connected: user %d", client.userID)
-			
+
 			// Notify other clients about new peer
 			message := P2PMessage{
 				Type:      PeerConnect,
@@ -89,7 +87,7 @@ func (m *P2PManager) run() {
 				delete(m.clients, client.userID)
 				close(client.send)
 				log.Printf("P2P client disconnected: user %d", client.userID)
-				
+
 				// Notify other clients about peer disconnect
 				message := P2PMessage{
 					Type:      PeerDisconnect,
@@ -99,7 +97,7 @@ func (m *P2PManager) run() {
 				m.broadcastToOthers(client.userID, message)
 			}
 
-		case message := range m.broadcast:
+		case message := <-m.broadcast:
 			m.broadcastMessage(message)
 		}
 	}
@@ -209,7 +207,7 @@ func (c *P2PClient) handleMessage(message P2PMessage) {
 	case PeerAnnounce:
 		// Handle peer announcement for a resource
 		c.joinResource(message.ResourceID)
-		
+
 		// Update swarm stats
 		stats := getSwarmStats(message.ResourceID)
 		response := P2PMessage{
@@ -245,7 +243,7 @@ func (c *P2PClient) joinResource(resourceID int) {
 		c.resources = make(map[int]bool)
 	}
 	c.resources[resourceID] = true
-	
+
 	// Get current peers for this resource
 	peers := getSwarmPeers(resourceID)
 	response := P2PMessage{
@@ -280,7 +278,7 @@ func (c *P2PClient) handlePieceRequest(message P2PMessage) {
 
 func (c *P2PClient) handlePieceResponse(message P2PMessage) {
 	// Handle received piece data
-	log.Printf("Received piece %d for resource %d from user %d", 
+	log.Printf("Received piece %d for resource %d from user %d",
 		message.PieceIndex, message.ResourceID, message.UserID)
 }
 
