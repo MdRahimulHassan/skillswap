@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="js/api-config.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
 </head>
 <body>
 
@@ -30,7 +31,7 @@ async function signup() {
     const validation = validateForm('signupForm', {
         username: ['required', 'minLength:3'],
         email: ['required', 'email'],
-        password: ['required', 'minLength:8', 'password']
+        password: ['required', 'minLength:8']
     });
 
     if (!validation.valid) {
@@ -41,7 +42,7 @@ async function signup() {
     loading.show('signupBtn', 'Creating account...');
 
     try {
-        await apiCall(API_CONFIG.ENDPOINTS.SIGNUP, {
+        const response = await apiCall(API_CONFIG.ENDPOINTS.SIGNUP, {
             method: "POST",
             body: JSON.stringify({
                 username: document.getElementById("username").value,
@@ -50,12 +51,16 @@ async function signup() {
             })
         });
 
-        showToast('Account created successfully! Please login.', 'success');
-        
-        // Redirect after a short delay
-        setTimeout(() => {
-            window.location.href = "login.html";
-        }, 1500);
+        if (response.status === 'success') {
+            showToast(response.message || 'Account created successfully! Please login.', 'success');
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 1500);
+        } else {
+            showToast(response.message || 'Signup failed', 'error');
+        }
         
     } catch (error) {
         handleError(error, 'Signup');

@@ -70,8 +70,71 @@ function logout() {
     auth.logout();
 }
 
+// Load dashboard statistics with error boundary and retry
+const loadDashboardStats = withErrorBoundary(withRetry(async () => {
+    const userId = auth.getUserId();
+    if (!userId) return;
+
+    loading.showGlobalWithTimeout('Loading dashboard...');
+    
+    const stats = await apiCall(`${API_CONFIG.ENDPOINTS.DASHBOARD_STATS}?user_id=${userId}`);
+    
+    // Update stat cards with validation
+    const skillsOfferedEl = document.getElementById('skillsOffered');
+    const skillsRequestedEl = document.getElementById('skillsRequested');
+    const messagesEl = document.getElementById('messages');
+    
+    if (skillsOfferedEl) skillsOfferedEl.textContent = stats.skills_offered || 0;
+    if (skillsRequestedEl) skillsRequestedEl.textContent = stats.skills_requested || 0;
+    if (messagesEl) messagesEl.textContent = stats.messages || 0;
+    
+    // Load recent messages
+    await loadRecentMessages();
+    
+    loading.hideGlobal();
+}, 3, 1000, 'Load Dashboard'), 'Load Dashboard');
+
+// Load recent messages with error boundary
+const loadRecentMessages = withErrorBoundary(async () => {
+    const userId = auth.getUserId();
+    if (!userId) return;
+    
+    const recentMessages = await apiCall(`${API_CONFIG.ENDPOINTS.CHATS}?user_id=${userId}&limit=3`);
+    
+    const recentSection = document.querySelector('.section');
+    if (!recentSection) return;
+    
+    const messagesContainer = recentSection.querySelector('.item')?.parentNode;
+    if (!messagesContainer) return;
+    
+    messagesContainer.innerHTML = '';
+    
+    if (recentMessages && recentMessages.length > 0) {
+        recentMessages.slice(0, 3).forEach(chat => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'item';
+            
+            const displayName = chat.name || chat.username || `User ${chat.user_id}`;
+            const lastMessage = chat.last_msg || 'No messages yet';
+            
+            messageDiv.innerHTML = `💬 ${escapeHtml(displayName)}: "${escapeHtml(lastMessage)}"`;
+            messagesContainer.appendChild(messageDiv);
+        });
+    } else {
+        messagesContainer.innerHTML = '<div class="item">No recent messages</div>';
+    }
+}, 'Load Recent Messages');
+
+// Utility function to escape HTML (if not already available)
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Initialize dashboard
-function initDashboard() {
+async function initDashboard() {
     if (!auth.requireAuth()) return;
     
     const username = auth.getUsername();
@@ -89,6 +152,9 @@ function initDashboard() {
             el.textContent = `Welcome back, ${username}!`;
         }
     });
+    
+    // Load dashboard data
+    await loadDashboardStats();
 }
 
 function toggleMenu() {

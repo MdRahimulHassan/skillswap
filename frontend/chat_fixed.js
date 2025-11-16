@@ -1,5 +1,14 @@
 // Enhanced Chat System with User Search and Proper Error Handling
 
+// Debug logging function
+function debugLog(message, data = null) {
+    if (data) {
+        console.log(`[Chat Debug] ${message}:`, data);
+    } else {
+        console.log(`[Chat Debug] ${message}`);
+    }
+}
+
 // Authentication check with graceful fallback
 let me = null;
 let username = null;
@@ -360,18 +369,106 @@ async function updateOnlineStatus(chatList) {
         const userIds = chatList.map(chat => chat.user_id).join(',');
         const statusData = await apiCall(`${API_CONFIG.ENDPOINTS.USERS_ONLINE}?ids=${userIds}`);
         
+        // Create a map for quick lookup
+        const statusMap = {};
         statusData.forEach(status => {
-            const chatItem = document.querySelector(`.chat-item[onclick="openChat(${status.user_id})"]`);
+            statusMap[status.user_id] = status.online;
+        });
+        
+        // Update chat list items
+        chatList.forEach(chat => {
+            const chatItem = document.querySelector(`.chat-item[onclick="openChat(${chat.user_id})"]`);
             if (chatItem) {
                 const statusIndicator = chatItem.querySelector('.online-status');
                 if (statusIndicator) {
-                    statusIndicator.className = `online-status ${status.online ? 'online' : 'offline'}`;
-                    statusIndicator.title = status.online ? 'Online' : 'Offline';
+                    const isOnline = statusMap[chat.user_id] || false;
+                    statusIndicator.className = `online-status ${isOnline ? 'online' : 'offline'}`;
+                    statusIndicator.title = isOnline ? 'Online' : 'Offline';
+                    
+                    // Add visual enhancement for online users
+                    if (isOnline) {
+                        chatItem.classList.add('user-online');
+                        chatItem.classList.remove('user-offline');
+                    } else {
+                        chatItem.classList.add('user-offline');
+                        chatItem.classList.remove('user-online');
+                    }
                 }
             }
         });
+        
+        // Update online users count in sidebar
+        updateOnlineUsersCount(statusData);
+        
     } catch (error) {
         console.error('Error updating online status:', error);
+    }
+}
+
+// Update online users count in sidebar
+function updateOnlineUsersCount(statusData) {
+    const onlineCount = statusData.filter(status => status.online).length;
+    const totalCount = statusData.length;
+    
+    // Update or create online status indicator in sidebar
+    let statusIndicator = document.getElementById('onlineStatusIndicator');
+    if (!statusIndicator) {
+        statusIndicator = document.createElement('div');
+        statusIndicator.id = 'onlineStatusIndicator';
+        statusIndicator.className = 'online-status-indicator';
+        
+        // Insert after the "You:" element
+        const meElement = document.getElementById('meId');
+        if (meElement && meElement.parentNode) {
+            meElement.parentNode.insertBefore(statusIndicator, meElement.nextSibling);
+        }
+    }
+    
+    statusIndicator.innerHTML = `
+        <span class="online-dot"></span>
+        <span class="online-text">${onlineCount} of ${totalCount} users online</span>
+    `;
+    
+    // Add styles if not present
+    if (!document.querySelector('#online-status-styles')) {
+        const style = document.createElement('style');
+        style.id = 'online-status-styles';
+        style.textContent = `
+            .online-status-indicator {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
+                color: var(--muted, #888);
+                margin: 8px 0;
+                padding: 4px 8px;
+                background: rgba(40, 167, 69, 0.1);
+                border-radius: 12px;
+                border: 1px solid rgba(40, 167, 69, 0.2);
+            }
+            .online-dot {
+                width: 8px;
+                height: 8px;
+                background: #28a745;
+                border-radius: 50%;
+                animation: pulse-green 2s infinite;
+            }
+            .user-online {
+                border-left: 3px solid #28a745 !important;
+                background: rgba(40, 167, 69, 0.02);
+            }
+            .user-offline {
+                opacity: 0.7;
+            }
+            .user-online .chat-avatar-fallback {
+                box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+            }
+            @keyframes pulse-green {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
     }
 }
 
@@ -424,7 +521,7 @@ function sendMessage() {
     }
 }
 
-// File upload
+// File upload with progress indicator
 function handleFileUpload(event) {
     if (!currentChat) {
         showToast('Please select a chat first', 'warning');
@@ -440,38 +537,281 @@ function handleFileUpload(event) {
         return;
     }
     
-    loading.showGlobal('Uploading file...');
+    debugLog('Uploading file', { fileName: file.name, size: file.size });
+    
+    // Create progress indicator
+    const progressId = 'upload_' + Date.now();
+    showUploadProgress(progressId, file.name);
+    
     const form = new FormData();
     form.append('sender_id', me);
     form.append('receiver_id', currentChat);
     form.append('file', file);
     
-    debugLog('Uploading file', { fileName: file.name, size: file.size });
+    // Create XMLHttpRequest for progress tracking
+    const xhr = new XMLHttpRequest();
     
-    fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPLOAD}`, {
-        method: 'POST',
-        body: form
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Upload failed: ${response.status}`);
+    // Track upload progress
+    xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            updateUploadProgress(progressId, percentComplete);
         }
-        return response.json();
-    })
-    .then(result => {
-        debugLog('File uploaded successfully', result);
-        showToast('File uploaded successfully!', 'success');
-        // Server will send WS notification to both participants
-    })
-    .catch(error => {
-        debugLog('File upload error', error);
-        handleError(error, 'File Upload');
-    })
-    .finally(() => {
-        loading.hideGlobal();
-        // Clear file input
-        event.target.value = '';
     });
+    
+    // Handle completion
+    xhr.addEventListener('load', () => {
+        if (xhr.status === 200) {
+            try {
+                const result = JSON.parse(xhr.responseText);
+                debugLog('File uploaded successfully', result);
+                showToast('File uploaded successfully!', 'success');
+                hideUploadProgress(progressId);
+                // Server will send WS notification to both participants
+            } catch (error) {
+                debugLog('Error parsing upload response', error);
+                showToast('Upload completed but response was invalid', 'warning');
+                hideUploadProgress(progressId);
+            }
+        } else {
+            debugLog('Upload failed with status', xhr.status);
+            showToast(`Upload failed: ${xhr.statusText}`, 'error');
+            hideUploadProgress(progressId);
+        }
+    });
+    
+    // Handle errors
+    xhr.addEventListener('error', () => {
+        debugLog('File upload error', 'Network error');
+        handleError(new Error('Network error during upload'), 'File Upload');
+        hideUploadProgress(progressId);
+    });
+    
+    // Handle abort
+    xhr.addEventListener('abort', () => {
+        debugLog('File upload cancelled');
+        showToast('Upload cancelled', 'info');
+        hideUploadProgress(progressId);
+    });
+    
+    // Send request
+    xhr.open('POST', `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPLOAD}`);
+    xhr.send(form);
+    
+    // Clear file input
+    event.target.value = '';
+}
+
+// Show upload progress indicator
+function showUploadProgress(progressId, fileName) {
+    const progressHtml = `
+        <div id="${progressId}" class="upload-progress">
+            <div class="upload-progress-header">
+                <span class="upload-filename">${escapeHtml(fileName)}</span>
+                <button class="upload-cancel" onclick="cancelUpload('${progressId}')">×</button>
+            </div>
+            <div class="upload-progress-bar">
+                <div class="upload-progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="upload-progress-text">0%</div>
+        </div>
+    `;
+    
+    // Create or find progress container
+    let progressContainer = document.getElementById('uploadProgressContainer');
+    if (!progressContainer) {
+        progressContainer = document.createElement('div');
+        progressContainer.id = 'uploadProgressContainer';
+        progressContainer.className = 'upload-progress-container';
+        
+        // Add styles if not present
+        if (!document.querySelector('#upload-progress-styles')) {
+            const style = document.createElement('style');
+            style.id = 'upload-progress-styles';
+            style.textContent = `
+                .upload-progress-container {
+                    position: fixed;
+                    bottom: 80px;
+                    right: 20px;
+                    z-index: 1000;
+                    max-width: 300px;
+                }
+                .upload-progress {
+                    background: white;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-bottom: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                }
+                .upload-progress-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+                }
+                .upload-filename {
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    color: #333;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    flex: 1;
+                }
+                .upload-cancel {
+                    background: none;
+                    border: none;
+                    color: #666;
+                    font-size: 1.2rem;
+                    cursor: pointer;
+                    padding: 0;
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                }
+                .upload-cancel:hover {
+                    background: #f0f0f0;
+                    color: #333;
+                }
+                .upload-progress-bar {
+                    width: 100%;
+                    height: 6px;
+                    background: #f0f0f0;
+                    border-radius: 3px;
+                    overflow: hidden;
+                    margin-bottom: 4px;
+                }
+                .upload-progress-fill {
+                    height: 100%;
+                    background: #4e54c8;
+                    transition: width 0.3s ease;
+                    border-radius: 3px;
+                }
+                .upload-progress-text {
+                    font-size: 0.8rem;
+                    color: #666;
+                    text-align: center;
+                }
+                @media (max-width: 768px) {
+                    .upload-progress-container {
+                        bottom: 20px;
+                        right: 10px;
+                        left: 10px;
+                        max-width: none;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(progressContainer);
+    }
+    
+    progressContainer.insertAdjacentHTML('beforeend', progressHtml);
+}
+
+// Update upload progress
+function updateUploadProgress(progressId, percentComplete) {
+    const progressElement = document.getElementById(progressId);
+    if (!progressElement) return;
+    
+    const fillElement = progressElement.querySelector('.upload-progress-fill');
+    const textElement = progressElement.querySelector('.upload-progress-text');
+    
+    if (fillElement) {
+        fillElement.style.width = percentComplete + '%';
+    }
+    
+    if (textElement) {
+        textElement.textContent = Math.round(percentComplete) + '%';
+    }
+}
+
+// Hide upload progress
+function hideUploadProgress(progressId) {
+    const progressElement = document.getElementById(progressId);
+    if (progressElement) {
+        progressElement.remove();
+    }
+    
+    // Remove container if empty
+    const container = document.getElementById('uploadProgressContainer');
+    if (container && container.children.length === 0) {
+        container.remove();
+    }
+}
+
+// Cancel upload (placeholder for future implementation)
+function cancelUpload(progressId) {
+    hideUploadProgress(progressId);
+    showToast('Upload cancelled', 'info');
+}
+
+// Mobile sidebar functionality
+function toggleMobileSidebar() {
+    const overlay = document.getElementById('mobileSidebarOverlay');
+    const sidebar = document.getElementById('mobileSidebar');
+    
+    if (overlay && sidebar) {
+        overlay.style.display = overlay.style.display === 'block' ? 'none' : 'block';
+        sidebar.classList.toggle('active');
+    }
+}
+
+function closeMobileSidebar() {
+    const overlay = document.getElementById('mobileSidebarOverlay');
+    const sidebar = document.getElementById('mobileSidebar');
+    
+    if (overlay && sidebar) {
+        overlay.style.display = 'none';
+        sidebar.classList.remove('active');
+    }
+}
+
+function createMobileSidebar() {
+    // Create mobile sidebar overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'mobileSidebarOverlay';
+    overlay.onclick = closeMobileSidebar;
+    
+    // Create mobile sidebar
+    const sidebar = document.createElement('div');
+    sidebar.id = 'mobileSidebar';
+    
+    // Clone sidebar content from desktop sidebar
+    const desktopSidebar = document.querySelector('.sidebar');
+    if (desktopSidebar) {
+        const sidebarContent = desktopSidebar.cloneNode(true);
+        
+        // Create header
+        const header = document.createElement('div');
+        header.className = 'mobile-sidebar-header';
+        header.innerHTML = `
+            <span>SkillSwap Chat</span>
+            <button class="mobile-sidebar-close" onclick="closeMobileSidebar()">×</button>
+        `;
+        
+        sidebar.appendChild(header);
+        sidebar.appendChild(sidebarContent);
+    }
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(sidebar);
+    
+    // Add mobile menu toggle to navigation
+    const nav = document.querySelector('.top-nav .nav-links');
+    if (nav && !document.getElementById('mobileChatMenuToggle')) {
+        const toggle = document.createElement('button');
+        toggle.id = 'mobileChatMenuToggle';
+        toggle.className = 'mobile-menu-toggle';
+        toggle.innerHTML = '☰';
+        toggle.onclick = toggleMobileSidebar;
+        nav.parentNode.insertBefore(toggle, nav);
+    }
 }
 
 // Event listeners
@@ -480,6 +820,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize authentication first
     initializeAuth();
+    
+    // Create mobile sidebar for responsive design
+    if (window.innerWidth <= 800) {
+        createMobileSidebar();
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 800) {
+            if (!document.getElementById('mobileSidebar')) {
+                createMobileSidebar();
+            }
+        } else {
+            closeMobileSidebar();
+        }
+    });
     
     // User search functionality
     const userSearchInput = document.getElementById('userSearch');

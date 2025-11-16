@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"main/db"
 	"main/models"
 	"net/http"
@@ -24,13 +23,13 @@ type LoginResponse struct {
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		sendErrorResponse(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -45,12 +44,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
     `, req.Email).Scan(&userID, &username, &storedHash)
 
 	if err != nil {
-		http.Error(w, "Invalid email or password", 401)
+		sendErrorResponse(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(req.Password)) != nil {
-		http.Error(w, "Invalid email or password", 401)
+		sendErrorResponse(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 

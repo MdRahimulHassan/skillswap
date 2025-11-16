@@ -10,6 +10,7 @@ type User struct {
 	ProfilePhoto string `json:"profile_photo"`
 	SkillsHave   string `json:"skills_have"`
 	SkillsWant   string `json:"skills_want"`
+	CreatedAt    string `json:"created_at,omitempty"`
 }
 
 type UserDB struct {
@@ -20,4 +21,5 @@ type UserDB struct {
 	ProfilePhoto sql.NullString `json:"profile_photo"`
 	SkillsHave   sql.NullString `json:"skills_have"`
 	SkillsWant   sql.NullString `json:"skills_want"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
 }

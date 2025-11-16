@@ -15,15 +15,17 @@ services:
       - "8080:8080"
     depends_on:
       - db
+    volumes:
+      - ./.env:/app/.env:ro
 
   db:
     image: postgres:15
     container_name: skillswap_db
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: skillswap
     ports:
       - "5432:5432"
     volumes:

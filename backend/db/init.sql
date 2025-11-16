@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS messages (
   content TEXT,
   is_file BOOLEAN DEFAULT FALSE,
   file_id INT,
+  delivered BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
