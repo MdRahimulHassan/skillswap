@@ -22,6 +22,7 @@ func main() {
 	http.HandleFunc("/api/profile", cors(handlers.GetProfile))
 	http.HandleFunc("/api/profile/update", cors(handlers.UpdateProfile))
 	http.HandleFunc("/api/users/search", cors(handlers.SearchUsers))
+	http.HandleFunc("/api/users/online", cors(handlers.GetOnlineStatus))
 
 	// Skills endpoints
 	http.HandleFunc("/api/skills/add", cors(handlers.AddSkill))

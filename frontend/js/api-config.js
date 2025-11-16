@@ -15,6 +15,7 @@ const API_CONFIG = {
         UPLOAD: '/upload',
         FILE: '/file',
         USERS_SEARCH: '/users/search',
+        USERS_ONLINE: '/users/online',
         SKILLS_ADD: '/skills/add',
         SKILLS_REMOVE: '/skills/remove',
         SKILLS_SEARCH: '/skills/search',

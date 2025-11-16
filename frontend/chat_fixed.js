@@ -213,18 +213,39 @@ async function loadChats() {
         list.forEach(it => {
             const d = document.createElement('div');
             d.className = 'chat-item' + (currentChat === it.user_id ? ' active' : '');
+            
+            const displayName = it.name || it.username || `User ${it.user_id}`;
+            const avatarText = (it.username || 'U')[0].toUpperCase();
+            const profilePhoto = it.profile_photo ? `<img src="${it.profile_photo}" alt="${displayName}" class="chat-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : '';
+            const avatarFallback = `<div class="chat-avatar-fallback">${avatarText}</div>`;
+            
             d.innerHTML = `
-                <div>
-                    <strong>User ${it.user_id}</strong>
-                    <div class="meta">${it.is_file ? '[file]' : (it.last_msg || '')}</div>
+                <div class="chat-item-content">
+                    <div class="chat-item-header">
+                        <div class="chat-avatar-container">
+                            ${profilePhoto}
+                            ${avatarFallback}
+                            <div class="online-status" title="Checking status..."></div>
+                        </div>
+                        <div class="chat-item-info">
+                            <strong>${escapeHtml(displayName)}</strong>
+                            <div class="chat-username">@${it.username || 'user' + it.user_id}</div>
+                        </div>
+                    </div>
+                    <div class="chat-preview">
+                        <div class="meta">${it.is_file ? '📎 File' : (it.last_msg || 'No messages yet')}</div>
+                        <div class="meta">${new Date(it.created_at).toLocaleString()}</div>
+                    </div>
                 </div>
-                <div class="meta">${new Date(it.created_at).toLocaleString()}</div>
             `;
             d.onclick = () => openChat(it.user_id);
             el.appendChild(d);
         });
         
         debugLog('Chat list rendered');
+        
+        // Update online status
+        updateOnlineStatus(list);
     } catch (error) {
         debugLog('Error loading chat list', error);
         handleError(error, 'Load Chats');
@@ -240,7 +261,22 @@ async function openChat(uid) {
         
         const headerEl = document.getElementById('chatHeader');
         if (headerEl) {
-            headerEl.innerText = 'Chat with User ' + uid;
+            // Try to get user info from the chat list first
+            const chatItem = document.querySelector(`.chat-item[onclick="openChat(${uid})"]`);
+            if (chatItem) {
+                const userName = chatItem.querySelector('strong')?.textContent;
+                headerEl.innerHTML = `
+                    <div class="chat-header-info">
+                        <div class="chat-header-avatar">${userName ? userName[0].toUpperCase() : 'U'}</div>
+                        <div>
+                            <div class="chat-header-name">${userName || 'User ' + uid}</div>
+                            <div class="chat-header-status">Click to see profile</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                headerEl.innerText = 'Chat with User ' + uid;
+            }
         }
         
         const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.HISTORY}?user1=${me}&user2=${uid}`);
@@ -314,6 +350,29 @@ function appendMessage(m) {
     
     container.appendChild(d);
     container.scrollTop = container.scrollHeight;
+}
+
+// Update online status for chat list users
+async function updateOnlineStatus(chatList) {
+    try {
+        if (!Array.isArray(chatList) || chatList.length === 0) return;
+        
+        const userIds = chatList.map(chat => chat.user_id).join(',');
+        const statusData = await apiCall(`${API_CONFIG.ENDPOINTS.USERS_ONLINE}?ids=${userIds}`);
+        
+        statusData.forEach(status => {
+            const chatItem = document.querySelector(`.chat-item[onclick="openChat(${status.user_id})"]`);
+            if (chatItem) {
+                const statusIndicator = chatItem.querySelector('.online-status');
+                if (statusIndicator) {
+                    statusIndicator.className = `online-status ${status.online ? 'online' : 'offline'}`;
+                    statusIndicator.title = status.online ? 'Online' : 'Offline';
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error updating online status:', error);
+    }
 }
 
 function escapeHtml(s) {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"main/db"
 	"main/models"
 	"net/http"
@@ -86,6 +87,14 @@ func SearchUsers(w http.ResponseWriter, r *http.Request) {
 	// Get current user ID to exclude from results
 	currentUserID := r.URL.Query().Get("exclude")
 
+	// Convert exclude to int if provided
+	var excludeUserID int
+	if currentUserID != "" {
+		if id, err := strconv.Atoi(currentUserID); err == nil {
+			excludeUserID = id
+		}
+	}
+
 	var sqlQuery string
 	var args []interface{}
 
@@ -97,18 +106,18 @@ func SearchUsers(w http.ResponseWriter, r *http.Request) {
         `
 		args = append(args, "%"+query+"%")
 
-		if currentUserID != "" {
+		if excludeUserID > 0 {
 			sqlQuery += " AND id != $" + strconv.Itoa(len(args)+1)
-			args = append(args, currentUserID)
+			args = append(args, excludeUserID)
 		}
 	} else {
 		sqlQuery = `
             SELECT id, username, email, name, profile_photo, skills_have, skills_want
             FROM users
         `
-		if currentUserID != "" {
+		if excludeUserID > 0 {
 			sqlQuery += " WHERE id != $1"
-			args = append(args, currentUserID)
+			args = append(args, excludeUserID)
 		}
 	}
 
@@ -121,21 +130,33 @@ func SearchUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var users []models.User
+	users := make([]models.User, 0)
 	for rows.Next() {
-		var user models.User
+		var userDB models.UserDB
 		err := rows.Scan(
-			&user.ID,
-			&user.Username,
-			&user.Email,
-			&user.Name,
-			&user.ProfilePhoto,
-			&user.SkillsHave,
-			&user.SkillsWant,
+			&userDB.ID,
+			&userDB.Username,
+			&userDB.Email,
+			&userDB.Name,
+			&userDB.ProfilePhoto,
+			&userDB.SkillsHave,
+			&userDB.SkillsWant,
 		)
 		if err != nil {
 			continue
 		}
+
+		// Convert to User model
+		user := models.User{
+			ID:           userDB.ID,
+			Username:     userDB.Username,
+			Email:        userDB.Email,
+			Name:         userDB.Name.String,
+			ProfilePhoto: userDB.ProfilePhoto.String,
+			SkillsHave:   userDB.SkillsHave.String,
+			SkillsWant:   userDB.SkillsWant.String,
+		}
+
 		users = append(users, user)
 	}
 

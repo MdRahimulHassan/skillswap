@@ -27,6 +27,12 @@ BEGIN
                    WHERE table_name='users' AND column_name='skills_want') THEN
         ALTER TABLE users ADD COLUMN skills_want TEXT;
     END IF;
+
+    -- Add delivered column to messages table
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name='messages' AND column_name='delivered') THEN
+        ALTER TABLE messages ADD COLUMN delivered BOOLEAN DEFAULT FALSE;
+    END IF;
 END $$;
 
 -- Create indexes for better performance
