@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile Test</title>
+</head>
+<body>
+    <h1>Profile Page Test</h1>
+    <div id="test-results"></div>
+    
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <script>
+        // Simulate authentication
+        auth.setAuth({
+            user_id: 1,
+            username: 'testuser',
+            email: 'test@example.com'
+        });
+        
+        async function testProfile() {
+            const results = document.getElementById('test-results');
+            
+            try {
+                results.innerHTML = '<p>Testing profile API...</p>';
+                
+                const user = await apiCall(`${API_CONFIG.ENDPOINTS.PROFILE}?id=1`);
+                
+                results.innerHTML = `
+                    <h2>✅ Profile API Working!</h2>
+                    <p><strong>ID:</strong> ${user.id}</p>
+                    <p><strong>Username:</strong> ${user.username}</p>
+                    <p><strong>Name:</strong> ${user.name || 'Not set'}</p>
+                    <p><strong>Skills Have:</strong> ${user.skills_have || 'None'}</p>
+                    <p><strong>Skills Want:</strong> ${user.skills_want || 'None'}</p>
+                    <p><a href="profile.html">Test Full Profile Page</a></p>
+                `;
+                
+            } catch (error) {
+                results.innerHTML = `<h2>❌ Error:</h2><p>${error.message}</p>`;
+            }
+        }
+        
+        testProfile();
+    </script>
+</body>
+</html>

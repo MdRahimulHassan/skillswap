@@ -10,6 +10,21 @@ import (
 	"strconv"
 )
 
+// Helper functions to handle NULL values
+func nullStringToString(ns sql.NullString) string {
+	if ns.Valid {
+		return ns.String
+	}
+	return ""
+}
+
+func nullTimeToString(nt sql.NullTime) string {
+	if nt.Valid {
+		return nt.Time.Format("2006-01-02T15:04:05Z07:00")
+	}
+	return ""
+}
+
 func GetProfile(w http.ResponseWriter, r *http.Request) {
 	// Only allow GET method
 	if r.Method != http.MethodGet {
@@ -30,19 +45,32 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user models.User
+	var userDB models.UserDB
 	err = db.DB.QueryRow(`
-        SELECT id, username, email, name, profile_photo, skills_have, skills_want
+        SELECT id, username, email, name, profile_photo, skills_have, skills_want, created_at
         FROM users WHERE id = $1
     `, id).Scan(
-		&user.ID,
-		&user.Username,
-		&user.Email,
-		&user.Name,
-		&user.ProfilePhoto,
-		&user.SkillsHave,
-		&user.SkillsWant,
+		&userDB.ID,
+		&userDB.Username,
+		&userDB.Email,
+		&userDB.Name,
+		&userDB.ProfilePhoto,
+		&userDB.SkillsHave,
+		&userDB.SkillsWant,
+		&userDB.CreatedAt,
 	)
+
+	// Convert to User model (handling NULL values)
+	user := models.User{
+		ID:           userDB.ID,
+		Username:     userDB.Username,
+		Email:        userDB.Email,
+		Name:         nullStringToString(userDB.Name),
+		ProfilePhoto: nullStringToString(userDB.ProfilePhoto),
+		SkillsHave:   nullStringToString(userDB.SkillsHave),
+		SkillsWant:   nullStringToString(userDB.SkillsWant),
+		CreatedAt:    nullTimeToString(userDB.CreatedAt),
+	}
 
 	if err != nil {
 		if err == sql.ErrNoRows {

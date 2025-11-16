@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"main/db"
 	"main/models"
 	"net/http"
