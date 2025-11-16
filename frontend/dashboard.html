@@ -17,14 +17,14 @@
     </div>
 
     <div class="nav-links" id="navLinks">
-        <a href="dashboard.html">Dashboard</a>
+        <a href="profile.html">Profile</a>
         <a href="chat.html">Messages</a>
         <a href="#">My Skills</a>
         <a href="#">Find Skills</a>
-        <a href="login.html">Logout</a>
+        <a href="#" onclick="logout()">Logout</a>
     </div>
 
-    <button class="profile-btn">My Profile</button>
+    <button class="profile-btn" id="profileBtn">My Profile</button>
 </div>
 
 <!-- MAIN CONTENT -->
@@ -62,9 +62,53 @@
 </div>
 
 <script>
+// Authentication check
+function checkAuthentication() {
+    const authenticated = localStorage.getItem("authenticated");
+    const username = localStorage.getItem("username");
+    
+    if (!authenticated || !username) {
+        window.location.href = "login.html";
+        return null;
+    }
+    
+    return username;
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("username");
+    localStorage.removeItem("authenticated");
+    window.location.href = "login.html";
+}
+
+// Initialize dashboard
+function initDashboard() {
+    const username = checkAuthentication();
+    if (!username) return;
+    
+    // Update profile button with username
+    const profileBtn = document.getElementById("profileBtn");
+    if (profileBtn) {
+        profileBtn.textContent = username;
+    }
+    
+    // Update welcome message or other user-specific content
+    const welcomeElements = document.querySelectorAll("h2");
+    welcomeElements.forEach(el => {
+        if (el.textContent === "Dashboard") {
+            el.textContent = `Welcome back, ${username}!`;
+        }
+    });
+}
+
 function toggleMenu() {
     document.getElementById("navLinks").classList.toggle("mobile-open");
 }
+
+// Run initialization when page loads
+document.addEventListener('DOMContentLoaded', initDashboard);
 </script>
 
 </body>

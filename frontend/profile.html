@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SkillSwap Profile</title>
+    <link rel="stylesheet" href="css/profile.css">
+</head>
+<body>
+
+<div class="main">
+
+    <div class="card">
+        <img id="profilePhoto" class="avatar" src="/static/images/default.png">
+
+        <h2 id="name"></h2>
+        <p id="username" class="username"></p>
+
+        <h3>Skills Offered</h3>
+        <p id="skillsHave"></p>
+
+        <h3>Skills Wanted</h3>
+        <p id="skillsWant"></p>
+
+        <button id="editBtn" class="profile-btn">Edit Profile</button>
+        <button id="contactBtn" class="profile-btn btn-secondary">Contact</button>
+    </div>
+
+    <div id="editForm" class="card hidden">
+        <h3>Edit Profile</h3>
+
+        <label>Name</label>
+        <input id="editName">
+
+        <label>Profile Photo URL</label>
+        <input id="editPhoto">
+
+        <label>Skills You Have (comma separated)</label>
+        <input id="editSkillsHave">
+
+        <label>Skills You Want (comma separated)</label>
+        <input id="editSkillsWant">
+
+        <button id="saveBtn" class="profile-btn">Save</button>
+    </div>
+
+</div>
+
+<script src="profile.js"></script>
+</body>
+</html>

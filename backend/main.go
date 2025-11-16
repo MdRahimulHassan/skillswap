@@ -10,6 +10,9 @@ import (
 func main() {
 	db.Connect()
 
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+
+
 	http.HandleFunc("/api/signup", cors(handlers.Signup))
 	http.HandleFunc("/api/login", cors(handlers.Login))
 	http.HandleFunc("/api/ws", cors(handlers.HandleWebSocket))
@@ -17,6 +20,15 @@ http.HandleFunc("/api/chats", cors(handlers.GetChatList))
 http.HandleFunc("/api/history", cors(handlers.GetHistory))
 http.HandleFunc("/api/upload", cors(handlers.UploadFile))
 http.HandleFunc("/api/file", cors(handlers.FileInfo))
+http.HandleFunc("/api/profile", cors(handlers.GetProfile))
+http.HandleFunc("/api/profile/update", cors(handlers.UpdateProfile))
+
+// Serve profile page
+http.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
+    http.ServeFile(w, r, "./profile.html")
+})
+
+
 // Serve files
 http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 

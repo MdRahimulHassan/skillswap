@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Authentication</title>
+</head>
+<body>
+    <h2>Test Authentication Flow</h2>
+    
+    <div>
+        <h3>Signup</h3>
+        <input id="signupUsername" placeholder="Username">
+        <input id="signupEmail" placeholder="Email">
+        <input id="signupPassword" placeholder="Password" type="password">
+        <button onclick="testSignup()">Signup</button>
+        <div id="signupResult"></div>
+    </div>
+    
+    <div>
+        <h3>Login</h3>
+        <input id="loginEmail" placeholder="Email">
+        <input id="loginPassword" placeholder="Password" type="password">
+        <button onclick="testLogin()">Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div>
+        <h3>Current Auth State</h3>
+        <div id="authState"></div>
+        <button onclick="checkAuth()">Check Auth</button>
+        <button onclick="clearAuth()">Clear Auth</button>
+    </div>
+
+    <script>
+        async function testSignup() {
+            const username = document.getElementById("signupUsername").value;
+            const email = document.getElementById("signupEmail").value;
+            const password = document.getElementById("signupPassword").value;
+
+            try {
+                const res = await fetch("http://localhost:8080/api/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    document.getElementById("signupResult").innerHTML = `<p style="color: red">Signup failed: ${errorText}</p>`;
+                    return;
+                }
+
+                document.getElementById("signupResult").innerHTML = `<p style="color: green">Signup successful! Please login.</p>`;
+            } catch (error) {
+                document.getElementById("signupResult").innerHTML = `<p style="color: red">Signup error: ${error.message}</p>`;
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById("loginEmail").value;
+            const password = document.getElementById("loginPassword").value;
+
+            try {
+                const res = await fetch("http://localhost:8080/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    document.getElementById("loginResult").innerHTML = `<p style="color: red">Login failed: ${errorText}</p>`;
+                    return;
+                }
+
+                const data = await res.json();
+                
+                // Store authentication data in localStorage
+                localStorage.setItem("user_id", data.user_id);
+                localStorage.setItem("username", data.username);
+                localStorage.setItem("authenticated", "true");
+                
+                document.getElementById("loginResult").innerHTML = `<p style="color: green">Login successful! User ID: ${data.user_id}, Username: ${data.username}</p>`;
+                checkAuth();
+            } catch (error) {
+                document.getElementById("loginResult").innerHTML = `<p style="color: red">Login error: ${error.message}</p>`;
+            }
+        }
+
+        function checkAuth() {
+            const authenticated = localStorage.getItem("authenticated");
+            const userId = localStorage.getItem("user_id");
+            const username = localStorage.getItem("username");
+            
+            const stateDiv = document.getElementById("authState");
+            if (authenticated && userId && username) {
+                stateDiv.innerHTML = `
+                    <p style="color: green">Authenticated: Yes</p>
+                    <p>User ID: ${userId}</p>
+                    <p>Username: ${username}</p>
+                `;
+            } else {
+                stateDiv.innerHTML = `<p style="color: red">Not authenticated</p>`;
+            }
+        }
+
+        function clearAuth() {
+            localStorage.removeItem("user_id");
+            localStorage.removeItem("username");
+            localStorage.removeItem("authenticated");
+            checkAuth();
+        }
+
+        // Check auth on page load
+        checkAuth();
+    </script>
+</body>
+</html>
