@@ -48,7 +48,7 @@ func Connect() {
 
 	// Run migrations
 	if err := runMigrations(); err != nil {
-		log.Fatal("Failed to run migrations:", err)
+		log.Println("Failed to run migrations:", err)
 	}
 }
 
@@ -62,34 +62,64 @@ func getEnv(key, defaultValue string) string {
 func runMigrations() error {
 	log.Println("Running database migrations...")
 
-	// Check if migration table exists
-	var exists bool
-	err := DB.QueryRow(`
-        SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_name = 'schema_migrations'
-        )
-    `).Scan(&exists)
-
+	// Create users table
+	_, err := DB.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id SERIAL PRIMARY KEY,
+			username VARCHAR(255) UNIQUE NOT NULL,
+			email VARCHAR(255) UNIQUE NOT NULL,
+			password_hash VARCHAR(255) NOT NULL,
+			name VARCHAR(255),
+			profile_photo TEXT,
+			skills_have TEXT,
+			skills_want TEXT,
+			created_at TIMESTAMP DEFAULT NOW()
+		)
+	`)
 	if err != nil {
-		return fmt.Errorf("failed to check migration table: %v", err)
+		return fmt.Errorf("failed to create users table: %v", err)
 	}
 
-	// Create migration table if it doesn't exist
-	if !exists {
-		_, err := DB.Exec(`
-            CREATE TABLE schema_migrations (
-                id SERIAL PRIMARY KEY,
-                version VARCHAR(255) NOT NULL,
-                applied_at TIMESTAMP DEFAULT NOW()
-            )
-        `)
-		if err != nil {
-			return fmt.Errorf("failed to create migration table: %v", err)
-		}
+	// Create messages table
+	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS messages (
+			id SERIAL PRIMARY KEY,
+			sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			receiver_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			content TEXT,
+			is_file BOOLEAN DEFAULT FALSE,
+			file_id INT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to create messages table: %v", err)
 	}
 
-	// Run migrations here if needed
+	// Create files table
+	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS files (
+			id SERIAL PRIMARY KEY,
+			filename TEXT NOT NULL,
+			stored_name TEXT NOT NULL,
+			size BIGINT NOT NULL,
+			mime_type TEXT,
+			uploader_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to create files table: %v", err)
+	}
+
+	// Create index
+	_, err = DB.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages (sender_id, receiver_id, created_at)
+	`)
+	if err != nil {
+		return fmt.Errorf("failed to create index: %v", err)
+	}
+
 	log.Println("Database migrations completed")
 	return nil
 }

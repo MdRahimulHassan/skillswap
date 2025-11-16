@@ -14,6 +14,7 @@ const API_CONFIG = {
         HISTORY: '/history',
         UPLOAD: '/upload',
         FILE: '/file',
+        USERS_SEARCH: '/users/search',
         WS: () => {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
