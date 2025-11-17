@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Skills - SkillSwap</title>
+    <link rel="stylesheet" href="css/unified.css">
+    <style>
+        /* Combined styles from my-skills.html and find-skills.html */
+        
+        /* Main Container */
+        .skills-main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Search Section */
+        .search-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e6e6ef;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .search-input:focus {
+            border-color: #4e54c8;
+        }
+        
+        .search-btn {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        
+        .search-btn:hover {
+            background: #3f45a5;
+        }
+        
+        /* Two Column Layout */
+        .skills-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        /* Skills Section */
+        .skills-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .skills-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .skills-header h2 {
+            color: #4e54c8;
+            margin: 0;
+        }
+        
+        .add-skill-btn {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .add-skill-btn:hover {
+            background: #3f45a5;
+        }
+        
+        /* Skill Items */
+        .skill-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4e54c8;
+            transition: transform 0.2s;
+        }
+        
+        .skill-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .skill-info {
+            flex: 1;
+        }
+        
+        .skill-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .skill-resources {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .skill-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .manage-resources-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s;
+        }
+        
+        .manage-resources-btn:hover {
+            background: #218838;
+        }
+        
+        .remove-skill-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s;
+        }
+        
+        .remove-skill-btn:hover {
+            background: #c82333;
+        }
+        
+        /* Search Results */
+        .results-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .results-count {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .skill-result {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem;
+            border: 1px solid #e6e6ef;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .skill-result:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #4e54c8;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-right: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .user-username {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .skill-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+        
+        .skill-have {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .skill-want {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .connect-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .connect-btn:hover {
+            background: #218838;
+        }
+        
+        .p2p-btn {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .p2p-btn:hover {
+            background: #3f45a5;
+        }
+        
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+        
+        .btn-primary {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary:hover {
+            background: #3f45a5;
+        }
+        
+        .resource-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e6e6ef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .resource-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid #e6e6ef;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .resource-item:hover {
+            background: #f8f9ff;
+            border-color: #4e54c8;
+        }
+        
+        .resource-item.selected {
+            background: #eef2ff;
+            border-color: #4e54c8;
+        }
+        
+        .resource-info {
+            flex: 1;
+        }
+        
+        .resource-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .resource-stats {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .request-message {
+            width: 100%;
+            min-height: 80px;
+            padding: 0.75rem;
+            border: 1px solid #e6e6ef;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+        
+        .request-message:focus {
+            outline: none;
+            border-color: #4e54c8;
+        }
+        
+        .no-skills, .no-results {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .skills-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-container {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+            
+            .skill-result {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .user-avatar {
+                margin-right: 0;
+                margin-bottom: 1rem;
+            }
+            
+            .skill-actions {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+        }
+    </style>
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+</head>
+<body>
+    <!-- Common Navbar will be inserted here by JavaScript -->
+    <script src="js/common-navbar.js"></script>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Main Content -->
+    <div class="skills-main-container">
+        <h2>Skills Management</h2>
+        <p>Manage your skills and discover new ones from the community.</p>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="skillSearch" 
+                    class="search-input" 
+                    placeholder="Search for skills (e.g., JavaScript, Design, Marketing)..."
+                    onkeypress="handleSearchKeyPress(event)"
+                >
+                <button class="search-btn" onclick="searchSkills()">Search</button>
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="skills-container">
+            <!-- Left Column: My Skills -->
+            <div class="my-skills-section">
+                <!-- Skills I Have -->
+                <div class="skills-section">
+                    <div class="skills-header">
+                        <h2>🎯 Skills I Have</h2>
+                        <button class="add-skill-btn" onclick="openAddSkillModal('have')">+ Add Skill</button>
+                    </div>
+                    <div id="skillsHaveList">
+                        <div class="no-skills">No skills added yet</div>
+                    </div>
+                </div>
+
+                <!-- Skills I Want -->
+                <div class="skills-section">
+                    <div class="skills-header">
+                        <h2>🎓 Skills I Want</h2>
+                        <button class="add-skill-btn" onclick="openAddSkillModal('want')">+ Add Skill</button>
+                    </div>
+                    <div id="skillsWantList">
+                        <div class="no-skills">No skills added yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Search Results -->
+            <div class="search-results-section">
+                <div class="results-section">
+                    <div class="results-header">
+                        <h3>Available Skills</h3>
+                        <span class="results-count" id="resultsCount"></span>
+                    </div>
+                    <div id="searchResults">
+                        <div class="no-results">Search for skills to see available options</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Skill Modal -->
+    <div id="addSkillModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Add Skill</h3>
+                <button class="close-btn" onclick="closeAddSkillModal()">&times;</button>
+            </div>
+            <form id="addSkillForm" onsubmit="event.preventDefault(); addSkill();">
+                <div class="form-group">
+                    <label for="skillInput">Skill Name</label>
+                    <input type="text" id="skillInput" placeholder="e.g., JavaScript, Design, Marketing" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeAddSkillModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Skill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- P2P Request Modal -->
+    <div id="p2pRequestModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Request Learning Resources</h3>
+                <button class="close-btn" onclick="closeP2PModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>From:</strong> <span id="modalTargetUser"></span></p>
+                <p><strong>Skill:</strong> <span id="modalSkill"></span></p>
+                
+                <div class="resource-list" id="modalResourceList">
+                    <div class="no-results">Loading available resources...</div>
+                </div>
+                
+                <label for="requestMessage"><strong>Message (optional):</strong></label>
+                <textarea 
+                    id="requestMessage" 
+                    class="request-message" 
+                    placeholder="Introduce yourself and explain why you're interested in these resources..."
+                ></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn-cancel" onclick="closeP2PModal()">Cancel</button>
+                <button class="btn-primary" id="sendRequestBtn" onclick="sendP2PRequest()">Send Request</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentSkillType = '';
+        let currentSkillName = '';
+        let userSkills = {
+            skills_have: [],
+            skills_want: []
+        };
+        let skillResources = {};
+        let searchResults = [];
+        let currentP2PRequest = {
+            targetUserId: null,
+            targetUserName: null,
+            skill: null,
+            selectedResources: []
+        };
+
+        // Initialize page
+        function initSkillsPage() {
+            if (!auth.requireAuth()) return;
+            
+            const username = auth.getUsername();
+            const profileBtn = document.getElementById("profileBtn");
+            if (profileBtn) {
+                profileBtn.textContent = username;
+            }
+            
+            // Load user skills
+            loadUserSkills();
+            
+            // Focus on search input
+            document.getElementById('skillSearch').focus();
+        }
+
+        // Load user's skills
+        async function loadUserSkills() {
+            try {
+                loading.showGlobal('Loading skills...');
+                const userId = auth.getUserId();
+                const response = await apiCall(`${API_CONFIG.ENDPOINTS.SKILLS_USER}?user_id=${userId}`);
+                
+                userSkills = response;
+                
+                // Load skill resources
+                await loadSkillResources(userId);
+                
+                renderSkills();
+            } catch (error) {
+                handleError(error, 'Load Skills');
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Load resources for all skills
+        async function loadSkillResources(userId) {
+            try {
+                const response = await apiCall(`${API_CONFIG.ENDPOINTS.SKILL_RESOURCES_ALL}?user_id=${userId}`);
+                
+                skillResources = {};
+                response.forEach(item => {
+                    if (!skillResources[item.skill_name]) {
+                        skillResources[item.skill_name] = [];
+                    }
+                    skillResources[item.skill_name].push(item);
+                });
+            } catch (error) {
+                console.error('Failed to load skill resources:', error);
+                skillResources = {};
+            }
+        }
+
+        // Render skills in UI
+        function renderSkills() {
+            renderSkillsList('skillsHaveList', userSkills.skills_have, 'have');
+            renderSkillsList('skillsWantList', userSkills.skills_want, 'want');
+        }
+
+        function renderSkillsList(containerId, skills, skillType) {
+            const container = document.getElementById(containerId);
+            
+            if (!skills || skills.length === 0) {
+                container.innerHTML = '<div class="no-skills">No skills added yet</div>';
+                return;
+            }
+            
+            container.innerHTML = skills.map(skill => {
+                const resourceCount = skillResources[skill] ? skillResources[skill].length : 0;
+                return `
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <div class="skill-name">${escapeHtml(skill)}</div>
+                            <div class="skill-resources">${resourceCount} resource${resourceCount !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div class="skill-actions">
+                            ${skillType === 'have' ? `<button class="manage-resources-btn" onclick="manageResources('${escapeHtml(skill)}')">Manage</button>` : ''}
+                            <button class="remove-skill-btn" onclick="removeSkill('${skillType}', '${escapeHtml(skill)}')">Remove</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Open add skill modal
+        function openAddSkillModal(skillType) {
+            currentSkillType = skillType;
+            const modal = document.getElementById('addSkillModal');
+            const title = document.getElementById('modalTitle');
+            
+            title.textContent = skillType === 'have' ? 'Add Skill I Have' : 'Add Skill I Want';
+            document.getElementById('skillInput').value = '';
+            modal.style.display = 'block';
+            
+            // Focus on input
+            setTimeout(() => {
+                document.getElementById('skillInput').focus();
+            }, 100);
+        }
+
+        // Close add skill modal
+        function closeAddSkillModal() {
+            document.getElementById('addSkillModal').style.display = 'none';
+            currentSkillType = '';
+        }
+
+        // Add new skill
+        async function addSkill() {
+            const skillInput = document.getElementById('skillInput');
+            const skill = skillInput.value.trim();
+            
+            if (!skill) {
+                showToast('Please enter a skill name', 'error');
+                return;
+            }
+            
+            try {
+                loading.showGlobal('Adding skill...');
+                const userId = auth.getUserId();
+                
+                const response = await apiCall(API_CONFIG.ENDPOINTS.SKILLS_ADD, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        user_id: userId,
+                        skill: skill,
+                        skill_type: currentSkillType
+                    })
+                });
+                
+                if (response.success) {
+                    showToast(response.message, 'success');
+                    closeAddSkillModal();
+                    loadUserSkills(); // Reload skills
+                } else {
+                    showToast(response.message, 'error');
+                }
+            } catch (error) {
+                handleError(error, 'Add Skill');
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Remove skill
+        async function removeSkill(skillType, skill) {
+            if (!confirm(`Are you sure you want to remove "${skill}" from your ${skillType} skills?`)) {
+                return;
+            }
+            
+            try {
+                loading.showGlobal('Removing skill...');
+                const userId = auth.getUserId();
+                
+                const response = await apiCall(API_CONFIG.ENDPOINTS.SKILLS_REMOVE, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        user_id: userId,
+                        skill: skill,
+                        skill_type: skillType
+                    })
+                });
+                
+                if (response.success) {
+                    showToast(response.message, 'success');
+                    loadUserSkills(); // Reload skills
+                } else {
+                    showToast(response.message, 'error');
+                }
+            } catch (error) {
+                handleError(error, 'Remove Skill');
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Manage resources for a skill (placeholder)
+        function manageResources(skillName) {
+            showToast('Resource management feature coming soon! You can manage resources from the P2P Dashboard.', 'info');
+        }
+
+        // Handle search on Enter key
+        function handleSearchKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchSkills();
+            }
+        }
+
+        // Search for skills
+        async function searchSkills() {
+            const query = document.getElementById('skillSearch').value.trim();
+            
+            if (!query) {
+                showToast('Please enter a skill to search for', 'warning');
+                return;
+            }
+            
+            try {
+                loading.showGlobal('Searching skills...');
+                const results = await apiCall(`${API_CONFIG.ENDPOINTS.SKILLS_SEARCH}?q=${encodeURIComponent(query)}`);
+                
+                searchResults = results;
+                renderSearchResults(query);
+            } catch (error) {
+                handleError(error, 'Search Skills');
+                document.getElementById('searchResults').innerHTML = '<div class="no-results">Error searching for skills. Please try again.</div>';
+                document.getElementById('resultsCount').textContent = '';
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Render search results
+        function renderSearchResults(query) {
+            const resultsContainer = document.getElementById('searchResults');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            if (!searchResults || searchResults.length === 0) {
+                resultsContainer.innerHTML = `<div class="no-results">No users found with skills matching "${escapeHtml(query)}".</div>`;
+                resultsCount.textContent = '0 results';
+                return;
+            }
+            
+            resultsCount.textContent = `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''}`;
+            
+            // Group results by user
+            const userGroups = {};
+            searchResults.forEach(result => {
+                if (!userGroups[result.user_id]) {
+                    userGroups[result.user_id] = {
+                        user_id: result.user_id,
+                        username: result.username,
+                        name: result.name,
+                        profile_photo: result.profile_photo,
+                        skills: []
+                    };
+                }
+                userGroups[result.user_id].skills.push(result);
+            });
+            
+            resultsContainer.innerHTML = Object.values(userGroups).map(user => {
+                // Get first skill that user 'has' for connection requests
+                const firstHaveSkill = user.skills.find(skill => skill.skill_type === 'have');
+                const skillName = firstHaveSkill ? firstHaveSkill.skill : user.skills[0]?.skill || '';
+                
+                return `
+                <div class="skill-result">
+                    <div class="user-avatar">
+                        ${user.profile_photo ? 
+                            `<img src="${user.profile_photo}" alt="${user.name}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` :
+                            user.name ? user.name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()
+                        }
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">${escapeHtml(user.name || user.username)}</div>
+                        <div class="user-username">@${escapeHtml(user.username)}</div>
+                        <div>
+                            ${user.skills.map(skill => `
+                                <span class="skill-badge skill-${skill.skill_type}">
+                                    ${skill.skill_type === 'have' ? 'Has' : 'Wants'}: ${escapeHtml(skill.skill)}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="skill-actions">
+                        ${firstHaveSkill ? `
+                            <button class="p2p-btn" onclick="requestP2PConnection(${user.user_id}, '${escapeHtml(user.name || user.username)}', '${escapeHtml(skillName)}')">
+                                📁 Request Resources
+                            </button>
+                        ` : ''}
+                        <a href="chat.html" class="connect-btn" onclick="startChat(${user.user_id}, '${escapeHtml(user.name || user.username)}')">
+                            💬 Chat
+                        </a>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Request P2P connection for resources
+        async function requestP2PConnection(targetUserId, targetUserName, skill) {
+            currentP2PRequest = {
+                targetUserId: targetUserId,
+                targetUserName: targetUserName,
+                skill: skill,
+                selectedResources: []
+            };
+            
+            // Show modal
+            document.getElementById('modalTargetUser').textContent = targetUserName;
+            document.getElementById('modalSkill').textContent = skill;
+            document.getElementById('p2pRequestModal').style.display = 'block';
+            
+            // Load user's resources for this skill
+            await loadUserResources(targetUserId, skill);
+        }
+
+        // Load user's resources for a specific skill
+        async function loadUserResources(userId, skill) {
+            try {
+                const resources = await apiCall(`${API_CONFIG.ENDPOINTS.SKILL_RESOURCES}?user_id=${userId}&skill_name=${encodeURIComponent(skill)}`);
+                renderResourceList(resources);
+            } catch (error) {
+                console.error('Failed to load resources:', error);
+                document.getElementById('modalResourceList').innerHTML = '<div class="no-results">No resources available for this skill</div>';
+            }
+        }
+
+        // Render resource list in modal
+        function renderResourceList(resources) {
+            const container = document.getElementById('modalResourceList');
+            
+            if (!resources || resources.length === 0) {
+                container.innerHTML = '<div class="no-results">No resources available for this skill</div>';
+                return;
+            }
+            
+            container.innerHTML = resources.map(resource => `
+                <div class="resource-item" onclick="toggleResourceSelection(${resource.resource_id}, this)">
+                    <div class="resource-info">
+                        <div class="resource-title">${escapeHtml(resource.title)}</div>
+                        <div class="resource-stats">
+                            📊 ${resource.rating || 0} rating • 📥 ${resource.download_count || 0} downloads • 💾 ${formatFileSize(resource.file_size)}
+                        </div>
+                    </div>
+                    <input type="checkbox" id="resource_${resource.resource_id}" style="margin-left: 1rem;">
+                </div>
+            `).join('');
+        }
+
+        // Toggle resource selection
+        function toggleResourceSelection(resourceId, element) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            const index = currentP2PRequest.selectedResources.indexOf(resourceId);
+            
+            if (index > -1) {
+                currentP2PRequest.selectedResources.splice(index, 1);
+                element.classList.remove('selected');
+                checkbox.checked = false;
+            } else {
+                currentP2PRequest.selectedResources.push(resourceId);
+                element.classList.add('selected');
+                checkbox.checked = true;
+            }
+        }
+
+        // Close P2P modal
+        function closeP2PModal() {
+            document.getElementById('p2pRequestModal').style.display = 'none';
+            currentP2PRequest = {
+                targetUserId: null,
+                targetUserName: null,
+                skill: null,
+                selectedResources: []
+            };
+        }
+
+        // Send P2P connection request
+        async function sendP2PRequest() {
+            const message = document.getElementById('requestMessage').value.trim();
+            const sendBtn = document.getElementById('sendRequestBtn');
+            
+            try {
+                sendBtn.disabled = true;
+                sendBtn.textContent = 'Sending...';
+                
+                const response = await apiCall(API_CONFIG.ENDPOINTS.P2P_CONNECTIONS, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        requester_id: auth.getUserId(),
+                        target_user_id: currentP2PRequest.targetUserId,
+                        skill: currentP2PRequest.skill,
+                        resource_ids: currentP2PRequest.selectedResources,
+                        message: message || `Hi ${currentP2PRequest.targetUserName}! I'm interested in learning about ${currentP2PRequest.skill}.`
+                    })
+                });
+                
+                if (response.success) {
+                    showToast(`Connection request sent to ${currentP2PRequest.targetUserName}!`, 'success');
+                    closeP2PModal();
+                } else {
+                    showToast(response.message || 'Failed to send request', 'error');
+                }
+            } catch (error) {
+                handleError(error, 'P2P Connection Request');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send Request';
+            }
+        }
+
+        // Start chat with user
+        function startChat(userId, userName) {
+            // Store target user info for chat page
+            localStorage.setItem('chat_target_user', JSON.stringify({
+                user_id: userId,
+                name: userName
+            }));
+            
+            showToast(`Opening chat with ${userName}...`, 'success');
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Utility function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addSkillModal');
+            const p2pModal = document.getElementById('p2pRequestModal');
+            
+            if (event.target === addModal) {
+                closeAddSkillModal();
+            }
+            if (event.target === p2pModal) {
+                closeP2PModal();
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initSkillsPage);
+    </script>
+</body>
+</html>

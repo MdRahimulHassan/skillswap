@@ -40,35 +40,30 @@ class CommonNavbar {
                         <a href="dashboard.html" data-page="dashboard">
                             <i class="fas fa-home"></i> Dashboard
                         </a>
-                        <a href="profile.html" data-page="profile">
-                            <i class="fas fa-user"></i> Profile
-                        </a>
                         <a href="chat.html" data-page="chat">
                             <i class="fas fa-comments"></i> Messages
                         </a>
-                        <a href="my-skills.html" data-page="my-skills">
-                            <i class="fas fa-graduation-cap"></i> My Skills
-                        </a>
-                        <a href="find-skills.html" data-page="find-skills">
-                            <i class="fas fa-search"></i> Find Skills
-                        </a>
-                        <a href="find-resources.html" data-page="find-resources">
-                            <i class="fas fa-folder"></i> Resources
+                        <a href="skills.html" data-page="skills">
+                            <i class="fas fa-graduation-cap"></i> Skills
                         </a>
                         <a href="p2p-dashboard.html" data-page="p2p-dashboard">
-                            <i class="fas fa-network-wired"></i> P2P Network
-                        </a>
-                        <a href="manage-connections.html" data-page="manage-connections">
-                            <i class="fas fa-user-friends"></i> Connections
-                        </a>
-                        <a href="#" onclick="commonNavbar.logout()" class="logout-link">
-                            <i class="fas fa-sign-out-alt"></i> Logout
+                            <i class="fas fa-network-wired"></i> P2P Networking
                         </a>
                     </div>
                     
-                    <button class="profile-btn" id="profileBtn" onclick="window.location.href='profile.html'">
-                        My Profile
-                    </button>
+                    <div class="profile-dropdown">
+                        <button class="profile-icon-btn" id="profileIconBtn" onclick="commonNavbar.toggleDropdown()">
+                            <i class="fas fa-user-cog"></i>
+                        </button>
+                        <div class="dropdown-menu" id="profileDropdown">
+                            <a href="profile.html" data-page="profile">
+                                <i class="fas fa-user"></i> Profile
+                            </a>
+                            <a href="#" onclick="commonNavbar.logout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
                 </div>
             `;
             
@@ -94,6 +89,12 @@ class CommonNavbar {
             const chatLink = document.querySelector('[data-page="chat"]');
             if (chatLink) chatLink.classList.add('active');
         }
+
+        // Handle legacy pages that redirect to new skills page
+        if (this.currentPage === 'my-skills' || this.currentPage === 'find-skills') {
+            const skillsLink = document.querySelector('[data-page="skills"]');
+            if (skillsLink) skillsLink.classList.add('active');
+        }
     }
 
     setupMobileMenu() {
@@ -115,36 +116,28 @@ class CommonNavbar {
             if (navbar && !navbar.contains(e.target) && navLinks.classList.contains('mobile-open')) {
                 navLinks.classList.remove('mobile-open');
             }
+
+            // Close dropdown when clicking outside
+            const dropdown = document.getElementById('profileDropdown');
+            const profileBtn = document.getElementById('profileIconBtn');
+            
+            if (dropdown && dropdown.classList.contains('show') && 
+                !dropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
         });
     }
 
     setupUserDisplay() {
-        // Try to get username from auth or localStorage
-        this.updateProfileButton();
+        // User display is now handled by the profile icon dropdown
+        // No username display needed in navbar
         
-        // Listen for auth changes
+        // Listen for auth changes if needed for future features
         if (window.auth) {
-            // Update when auth is available
-            setTimeout(() => this.updateProfileButton(), 100);
-        }
-    }
-
-    updateProfileButton() {
-        const profileBtn = document.getElementById('profileBtn');
-        if (!profileBtn) return;
-
-        let username = '';
-        
-        // Try to get username from various sources
-        if (window.auth && window.auth.getUsername) {
-            username = window.auth.getUsername();
-        } else if (typeof localStorage !== 'undefined') {
-            username = localStorage.getItem('username') || '';
-        }
-
-        if (username) {
-            profileBtn.textContent = username;
-            this.username = username;
+            // Auth is available, no immediate action needed
+            setTimeout(() => {
+                // Future: Could add user-specific features here
+            }, 100);
         }
     }
 
@@ -152,6 +145,13 @@ class CommonNavbar {
         const navLinks = document.getElementById('navLinks');
         if (navLinks) {
             navLinks.classList.toggle('mobile-open');
+        }
+    }
+
+    toggleDropdown() {
+        const dropdown = document.getElementById('profileDropdown');
+        if (dropdown) {
+            dropdown.classList.toggle('show');
         }
     }
 
@@ -174,10 +174,10 @@ class CommonNavbar {
         this.setupActiveState();
     }
 
-    // Public method to update username
+    // Public method to update username (kept for compatibility)
     updateUsername(username) {
         this.username = username;
-        this.updateProfileButton();
+        // No profile button to update anymore
     }
 }
 
