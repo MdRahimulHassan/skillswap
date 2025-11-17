@@ -9,28 +9,11 @@
 </head>
 <body>
 
-<!-- 🌟 NAVBAR -->
-<div class="navbar">
-    <div class="logo">SkillSwap</div>
+<!-- Common Navbar will be inserted here by JavaScript -->
+<script src="js/common-navbar.js"></script>
 
-    <div class="hamburger" onclick="toggleMenu()">
-        <div></div>
-        <div></div>
-        <div></div>
-    </div>
-
-    <div class="nav-links" id="navLinks">
-        <a href="profile.html">Profile</a>
-        <a href="chat.html">Messages</a>
-        <a href="my-skills.html">My Skills</a>
-        <a href="find-skills.html">Find Skills</a>
-        <a href="find-resources.html">Resources</a>
-        <a href="p2p-dashboard.html">P2P Network</a>
-        <a href="#" onclick="logout()">Logout</a>
-    </div>
-
-    <button class="profile-btn" id="profileBtn">My Profile</button>
-</div>
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <!-- MAIN CONTENT -->
 <div class="main">
@@ -189,12 +172,7 @@ async function initDashboard() {
     await loadDashboardStats();
 }
 
-function toggleMenu() {
-    const navLinks = document.getElementById("navLinks");
-    if (navLinks) {
-        navLinks.classList.toggle("mobile-open");
-    }
-}
+// Mobile menu toggle is now handled by common-navbar.js
 
 // Run initialization when page loads
 document.addEventListener('DOMContentLoaded', initDashboard);

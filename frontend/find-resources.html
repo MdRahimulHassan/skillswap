@@ -396,27 +396,11 @@
     <script src="js/p2p-client.js"></script>
 </head>
 <body>
-    <!-- Navigation -->
-    <div class="navbar">
-        <div class="logo">SkillSwap P2P</div>
+    <!-- Common Navbar will be inserted here by JavaScript -->
+    <script src="js/common-navbar.js"></script>
 
-        <div class="hamburger" onclick="toggleMenu()">
-            <div></div>
-            <div></div>
-            <div></div>
-        </div>
-
-        <div class="nav-links" id="navLinks">
-            <a href="dashboard.html">Dashboard</a>
-            <a href="profile.html">Profile</a>
-            <a href="chat.html">Messages</a>
-            <a href="my-skills.html">My Skills</a>
-            <a href="find-resources.html" class="active">Find Resources</a>
-            <a href="#" onclick="logout()">Logout</a>
-        </div>
-
-        <button class="profile-btn" id="profileBtn">My Profile</button>
-    </div>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- Main Content -->
     <div class="main">
@@ -823,13 +807,7 @@
             return div.innerHTML;
         }
 
-        // Mobile menu toggle
-        function toggleMenu() {
-            const navLinks = document.getElementById("navLinks");
-            if (navLinks) {
-                navLinks.classList.toggle("mobile-open");
-            }
-        }
+        // Mobile menu toggle is now handled by common-navbar.js
 
         // Logout function
         function logout() {

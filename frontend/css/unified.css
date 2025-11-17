@@ -151,6 +151,15 @@ body.auth-page {
     border-radius: var(--border-radius-sm);
     transition: var(--transition-fast);
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.nav-links a i {
+    font-size: var(--font-size-sm);
+    width: 16px;
+    text-align: center;
 }
 
 .nav-links a:hover {
@@ -163,13 +172,14 @@ body.auth-page {
     color: var(--white);
 }
 
-.nav-logout {
-    background: var(--danger-color) !important;
+.nav-links a.logout-link {
+    background: var(--danger-color);
     color: var(--white) !important;
 }
 
-.nav-logout:hover {
+.nav-links a.logout-link:hover {
     background: #c82333 !important;
+    color: var(--white) !important;
 }
 
 .profile-btn {
@@ -731,15 +741,18 @@ body.auth-page {
 }
 
 /* Mobile Menu */
-.mobile-menu {
-    display: none;
-}
-
 .hamburger {
     display: none;
     flex-direction: column;
     cursor: pointer;
     gap: 4px;
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+}
+
+.hamburger:hover {
+    background: var(--gray-100);
 }
 
 .hamburger div {
@@ -747,6 +760,19 @@ body.auth-page {
     height: 3px;
     background: var(--primary-color);
     border-radius: 2px;
+    transition: var(--transition-fast);
+}
+
+.hamburger.active div:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.active div:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active div:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
 }
 
 /* Responsive adjustments for page layouts */
@@ -780,14 +806,32 @@ body.auth-page {
         display: flex;
     }
     
-    .mobile-menu.active {
-        display: block;
+    .nav-links {
+        display: none;
         position: absolute;
         top: var(--nav-height);
         left: 0;
         right: 0;
         background: var(--white);
+        flex-direction: column;
+        padding: var(--spacing-md);
         box-shadow: var(--shadow-md);
         z-index: 999;
+        gap: var(--spacing-sm);
+    }
+    
+    .nav-links.mobile-open {
+        display: flex;
+    }
+    
+    .nav-links a {
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-sm);
+        width: 100%;
+        text-align: left;
+    }
+    
+    .profile-btn {
+        display: none;
     }
 }
