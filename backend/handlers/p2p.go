@@ -18,6 +18,52 @@ import (
 
 // P2P Resource Management
 
+// Helper function to check if user has approved connection for resource
+func hasApprovedConnection(userID, resourceID int) (bool, error) {
+	var skillName string
+	var ownerID int
+
+	// Get skill name and owner for this resource
+	err := db.DB.QueryRow(`
+		SELECT sr.skill_name, sr.owner_id 
+		FROM skill_resources sr
+		WHERE sr.resource_id = $1
+		LIMIT 1
+	`, resourceID).Scan(&skillName, &ownerID)
+
+	if err != nil {
+		// If not found in skill_resources, check if user owns the resource
+		err = db.DB.QueryRow("SELECT uploader_id FROM resources WHERE id = $1", resourceID).Scan(&ownerID)
+		if err != nil {
+			return false, err
+		}
+		// If user owns the resource, allow access
+		if ownerID == userID {
+			return true, nil
+		}
+		// Resource exists but not in skill_resources, deny access
+		return false, nil
+	}
+
+	// If user owns the resource, allow access
+	if ownerID == userID {
+		return true, nil
+	}
+
+	// Check if user has approved connection for this skill
+	var hasConnection bool
+	err = db.DB.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1 FROM p2p_connections 
+			WHERE ((requester_id = $1 AND target_user_id = $2) OR (requester_id = $2 AND target_user_id = $1))
+			AND skill_name = $3 
+			AND status = 'approved'
+		)
+	`, userID, ownerID, skillName).Scan(&hasConnection)
+
+	return hasConnection, err
+}
+
 type Resource struct {
 	ID              int       `json:"id"`
 	Title           string    `json:"title"`
@@ -154,10 +200,10 @@ func CreateResource(w http.ResponseWriter, r *http.Request) {
 	// Insert resource into database
 	var resourceID int
 	err = db.DB.QueryRow(`
-		INSERT INTO resources(title, description, skill_category, file_hash, file_size, mime_type, 
+		INSERT INTO resources(title, description, skill_category, file_hash, file_name, file_size, mime_type, 
 			uploader_id, piece_count, piece_size, pieces_hash, tags, difficulty_level)
-		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-		title, description, skillCategory, fileHash, fileSize, fh.Header.Get("Content-Type"),
+		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+		title, description, skillCategory, fileHash, fh.Filename, fileSize, fh.Header.Get("Content-Type"),
 		uploaderID, pieceCount, int(pieceSize), piecesHash, tags, difficultyLevel).Scan(&resourceID)
 
 	if err != nil {
@@ -318,6 +364,31 @@ func GetResourceDetails(w http.ResponseWriter, r *http.Request) {
 	resourceID, err := strconv.Atoi(resourceIDStr)
 	if err != nil {
 		http.Error(w, "invalid resource id", http.StatusBadRequest)
+		return
+	}
+
+	// Check user authentication and connection status
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		http.Error(w, "user_id parameter required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "invalid user_id", http.StatusBadRequest)
+		return
+	}
+
+	// Check if user has approved connection for this resource
+	hasAccess, err := hasApprovedConnection(userID, resourceID)
+	if err != nil {
+		http.Error(w, "error checking access: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !hasAccess {
+		http.Error(w, "access denied: approved connection required for this resource", http.StatusForbidden)
 		return
 	}
 
@@ -497,14 +568,39 @@ func GetPiece(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check user authentication and connection status
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		http.Error(w, "user_id parameter required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "invalid user_id", http.StatusBadRequest)
+		return
+	}
+
+	// Check if user has approved connection for this resource
+	hasAccess, err := hasApprovedConnection(userID, resourceID)
+	if err != nil {
+		http.Error(w, "error checking access: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !hasAccess {
+		http.Error(w, "access denied: approved connection required for this resource", http.StatusForbidden)
+		return
+	}
+
 	// Get resource info
-	var filePath, piecesHash string
+	var fileName, piecesHash string
 	var pieceSize int
 
 	err = db.DB.QueryRow(`
-		SELECT file_hash, piece_size, pieces_hash 
+		SELECT file_name, piece_size, pieces_hash 
 		FROM resources 
-		WHERE id = $1`, resourceID).Scan(&filePath, &pieceSize, &piecesHash)
+		WHERE id = $1`, resourceID).Scan(&fileName, &pieceSize, &piecesHash)
 
 	if err != nil {
 		http.Error(w, "resource not found", http.StatusNotFound)
@@ -512,7 +608,7 @@ func GetPiece(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Open the file
-	file, err := os.Open("./p2p_resources/" + filePath)
+	file, err := os.Open("./p2p_resources/" + fileName)
 	if err != nil {
 		http.Error(w, "file not found", http.StatusNotFound)
 		return
@@ -624,6 +720,255 @@ func getSwarmStats(resourceID int) SwarmStats {
 
 	stats.TotalSize = fileSize
 	return stats
+}
+
+// P2P Connection Request System
+
+type P2PRequest struct {
+	ID           int       `json:"id"`
+	RequesterID  int       `json:"requester_id"`
+	TargetUserID int       `json:"target_user_id"`
+	Skill        string    `json:"skill"`
+	Message      string    `json:"message"`
+	Status       string    `json:"status"` // pending, approved, rejected
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type P2PRequestResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+// POST /api/p2p/request
+func CreateP2PRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		RequesterID  int    `json:"requester_id"`
+		TargetUserID int    `json:"target_user_id"`
+		Skill        string `json:"skill"`
+		ResourceIDs  []int  `json:"resource_ids"`
+		Message      string `json:"message"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate required fields
+	if req.RequesterID == 0 || req.TargetUserID == 0 || req.Skill == "" {
+		http.Error(w, "requester_id, target_user_id, and skill are required", http.StatusBadRequest)
+		return
+	}
+
+	// Check if user is requesting from themselves
+	if req.RequesterID == req.TargetUserID {
+		http.Error(w, "Cannot request resources from yourself", http.StatusBadRequest)
+		return
+	}
+
+	// Check if there's already a pending request
+	var existingRequestID int
+	err := db.DB.QueryRow(`
+		SELECT id FROM p2p_requests 
+		WHERE requester_id = $1 AND target_user_id = $2 AND skill = $3 AND status = 'pending'
+	`, req.RequesterID, req.TargetUserID, req.Skill).Scan(&existingRequestID)
+
+	if err == nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(P2PRequestResponse{
+			Success: false,
+			Message: "You already have a pending request for this skill",
+		})
+		return
+	}
+
+	// Create the request
+	var requestID int
+	err = db.DB.QueryRow(`
+		INSERT INTO p2p_requests(requester_id, target_user_id, skill, message, status, created_at, updated_at)
+		VALUES($1, $2, $3, $4, 'pending', NOW(), NOW()) RETURNING id
+	`, req.RequesterID, req.TargetUserID, req.Skill, req.Message).Scan(&requestID)
+
+	if err != nil {
+		http.Error(w, "Failed to create request: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get user details for notification
+	var requesterName, targetName string
+	db.DB.QueryRow("SELECT username FROM users WHERE id = $1", req.RequesterID).Scan(&requesterName)
+	db.DB.QueryRow("SELECT username FROM users WHERE id = $1", req.TargetUserID).Scan(&targetName)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(P2PRequestResponse{
+		Success: true,
+		Message: fmt.Sprintf("Resource request sent to %s for %s", targetName, req.Skill),
+	})
+}
+
+// GET /api/p2p/requests
+func GetP2PRequests(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		http.Error(w, "user_id is required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid user_id", http.StatusBadRequest)
+		return
+	}
+
+	requestType := r.URL.Query().Get("type") // "sent" or "received"
+
+	var query string
+	var args []interface{}
+
+	if requestType == "sent" {
+		query = `
+			SELECT pr.id, pr.requester_id, pr.target_user_id, pr.skill, pr.message, pr.status, pr.created_at, pr.updated_at,
+				   u_target.username as target_username, u_target.name as target_name
+			FROM p2p_requests pr
+			JOIN users u_target ON pr.target_user_id = u_target.id
+			WHERE pr.requester_id = $1
+			ORDER BY pr.created_at DESC
+		`
+		args = []interface{}{userID}
+	} else {
+		query = `
+			SELECT pr.id, pr.requester_id, pr.target_user_id, pr.skill, pr.message, pr.status, pr.created_at, pr.updated_at,
+				   u_requester.username as requester_username, u_requester.name as requester_name
+			FROM p2p_requests pr
+			JOIN users u_requester ON pr.requester_id = u_requester.id
+			WHERE pr.target_user_id = $1
+			ORDER BY pr.created_at DESC
+		`
+		args = []interface{}{userID}
+	}
+
+	rows, err := db.DB.Query(query, args...)
+	if err != nil {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var requests []map[string]interface{}
+	for rows.Next() {
+		var request P2PRequest
+		var otherUsername, otherName *string
+
+		err := rows.Scan(
+			&request.ID, &request.RequesterID, &request.TargetUserID, &request.Skill,
+			&request.Message, &request.Status, &request.CreatedAt, &request.UpdatedAt,
+			&otherUsername, &otherName,
+		)
+		if err != nil {
+			continue
+		}
+
+		requestMap := map[string]interface{}{
+			"id":             request.ID,
+			"requester_id":   request.RequesterID,
+			"target_user_id": request.TargetUserID,
+			"skill":          request.Skill,
+			"message":        request.Message,
+			"status":         request.Status,
+			"created_at":     request.CreatedAt,
+			"updated_at":     request.UpdatedAt,
+		}
+
+		if requestType == "sent" {
+			requestMap["target_username"] = *otherUsername
+			requestMap["target_name"] = otherName
+		} else {
+			requestMap["requester_username"] = *otherUsername
+			requestMap["requester_name"] = otherName
+		}
+
+		requests = append(requests, requestMap)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(requests)
+}
+
+// POST /api/p2p/request/respond
+func RespondP2PRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		RequestID int    `json:"request_id"`
+		UserID    int    `json:"user_id"`
+		Response  string `json:"response"` // "approve" or "reject"
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate request
+	if req.RequestID == 0 || req.UserID == 0 || (req.Response != "approve" && req.Response != "reject") {
+		http.Error(w, "Invalid request parameters", http.StatusBadRequest)
+		return
+	}
+
+	// Check if user owns this request (is the target)
+	var targetUserID int
+	err := db.DB.QueryRow("SELECT target_user_id FROM p2p_requests WHERE id = $1", req.RequestID).Scan(&targetUserID)
+	if err != nil {
+		http.Error(w, "Request not found", http.StatusNotFound)
+		return
+	}
+
+	if targetUserID != req.UserID {
+		http.Error(w, "You can only respond to requests sent to you", http.StatusForbidden)
+		return
+	}
+
+	// Update request status
+	newStatus := "rejected"
+	if req.Response == "approve" {
+		newStatus = "approved"
+	}
+
+	_, err = db.DB.Exec(`
+		UPDATE p2p_requests 
+		SET status = $1, updated_at = NOW() 
+		WHERE id = $2
+	`, newStatus, req.RequestID)
+
+	if err != nil {
+		http.Error(w, "Failed to update request: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	responseMessage := "Request rejected"
+	if req.Response == "approve" {
+		responseMessage = "Request approved - You can now share resources"
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(P2PRequestResponse{
+		Success: true,
+		Message: responseMessage,
+	})
 }
 
 // GetP2PStatistics returns overall P2P system statistics

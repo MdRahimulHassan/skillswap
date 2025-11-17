@@ -11,14 +11,16 @@ import (
 func main() {
 	db.Connect()
 
-	// Start Unified WebSocket manager
+	// Start WebSocket managers
 	handlers.StartUnifiedManager()
+	handlers.StartP2PManager()
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/static"))))
 
 	http.HandleFunc("/api/signup", cors(handlers.Signup))
 	http.HandleFunc("/api/login", cors(handlers.Login))
 	http.HandleFunc("/api/ws", cors(handlers.HandleUnifiedWebSocket))
+	http.HandleFunc("/api/p2p/ws", cors(handlers.HandleP2PWebSocket))
 	http.HandleFunc("/api/chats", cors(handlers.GetChatList))
 	http.HandleFunc("/api/history", cors(handlers.GetHistory))
 	http.HandleFunc("/api/upload", cors(handlers.UploadFile))
@@ -55,6 +57,37 @@ func main() {
 	http.HandleFunc("/api/p2p/piece/", cors(handlers.GetPiece))
 	http.HandleFunc("/api/p2p/statistics", cors(handlers.GetP2PStatistics))
 
+	// P2P request endpoints
+	http.HandleFunc("/api/p2p/request", cors(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			handlers.CreateP2PRequest(w, r)
+		}
+	}))
+	http.HandleFunc("/api/p2p/requests", cors(handlers.GetP2PRequests))
+	http.HandleFunc("/api/p2p/request/respond", cors(handlers.RespondP2PRequest))
+
+	// P2P Connection Management endpoints
+	http.HandleFunc("/api/p2p/connections", cors(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			handlers.CreateP2PConnection(w, r)
+		} else if r.Method == "GET" {
+			handlers.GetP2PConnections(w, r)
+		}
+	}))
+	http.HandleFunc("/api/p2p/connections/respond", cors(handlers.RespondP2PConnection))
+	http.HandleFunc("/api/p2p/connections/skills", cors(handlers.GetSkillConnections))
+	http.HandleFunc("/api/p2p/connections/check", cors(handlers.HasSkillConnection))
+
+	// Skill Resource Management endpoints
+	http.HandleFunc("/api/skills/resources", cors(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			handlers.AddSkillResource(w, r)
+		} else if r.Method == "GET" {
+			handlers.GetSkillResources(w, r)
+		}
+	}))
+	http.HandleFunc("/api/skills/resources/all", cors(handlers.GetAllSkillResources))
+
 	// Serve HTML pages
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
@@ -87,6 +120,18 @@ func main() {
 		}
 		if r.URL.Path == "/find-skills" {
 			http.ServeFile(w, r, "./frontend/find-skills.html")
+			return
+		}
+		if r.URL.Path == "/find-resources" {
+			http.ServeFile(w, r, "./frontend/find-resources.html")
+			return
+		}
+		if r.URL.Path == "/p2p-dashboard" {
+			http.ServeFile(w, r, "./frontend/p2p-dashboard.html")
+			return
+		}
+		if r.URL.Path == "/manage-connections" {
+			http.ServeFile(w, r, "./frontend/manage-connections.html")
 			return
 		}
 		http.NotFound(w, r)

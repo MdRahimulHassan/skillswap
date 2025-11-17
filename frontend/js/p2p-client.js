@@ -1,8 +1,10 @@
 // P2P Client for SkillSwap - Browser-based peer-to-peer file sharing
 // Uses WebRTC for direct peer connections and WebSocket for coordination
+// Every user is treated as a P2P client by default
 
 class P2PClient {
     constructor(userId, trackerUrl) {
+        // Every user is a P2P client by default
         this.userId = userId || (auth ? auth.getUserId() : null);
         this.trackerUrl = trackerUrl;
         this.peers = new Map(); // Connected peers: peerId -> PeerConnection
@@ -14,6 +16,8 @@ class P2PClient {
         this.activeDownloads = new Map(); // pieceIndex -> DownloadInfo
         this.uploadQueue = []; // Queue of pieces to upload
         this.eventListeners = new Map(); // Event listeners
+        this.isConnected = false; // Connection status
+        this.isSeeding = true; // All users seed by default
         
         // WebRTC configuration
         this.rtcConfig = {
@@ -23,19 +27,59 @@ class P2PClient {
             ]
         };
         
-        this.init();
+        // Auto-initialize if we have user ID
+        if (this.userId) {
+            this.init();
+        }
     }
 
     async init() {
         try {
+            if (!this.userId) {
+                console.warn('P2P Client: No user ID provided, skipping initialization');
+                return;
+            }
+            
             await this.connectToTracker();
             this.setupEventHandlers();
+            this.isConnected = true;
             console.log('P2P Client initialized for user:', this.userId);
-        } catch (error) {
-            console.error('Failed to initialize P2P client:', error);
-            this.emit('error', error);
-        }
+        this.emit('client-ready', { userId: this.userId });
+    } catch (error) {
+        console.error('Failed to initialize P2P client:', error);
+        this.isConnected = false;
+        this.emit('error', error);
     }
+}
+
+// Global P2P client instance - every user is a P2P client
+let globalP2PClient = null;
+
+// Initialize global P2P client for any authenticated user
+function initializeGlobalP2PClient() {
+    if (globalP2PClient) {
+        return globalP2PClient; // Return existing instance
+    }
+    
+    try {
+        const userId = auth ? auth.getUserId() : null;
+        if (userId) {
+            globalP2PClient = new P2PClient(userId, API_CONFIG.ENDPOINTS.P2P_WS());
+            console.log('Global P2P client initialized for user:', userId);
+        } else {
+            console.warn('Cannot initialize P2P client: User not authenticated');
+        }
+    } catch (error) {
+        console.error('Failed to initialize global P2P client:', error);
+    }
+    
+    return globalP2PClient;
+}
+
+// Make P2P client available globally
+window.P2PClient = P2PClient;
+window.p2pClient = null; // Will be set by initializeGlobalP2PClient()
+window.initializeGlobalP2PClient = initializeGlobalP2PClient;
 
     // Connect to P2P tracker via WebSocket
     async connectToTracker() {
@@ -131,7 +175,7 @@ class P2PClient {
             formData.append('uploader_id', this.userId);
             formData.append('file', file);
             
-            const response = await fetch(`${API_CONFIG.BASE_URL}/api/p2p/resource/create`, {
+            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.P2P_RESOURCE_CREATE}`, {
                 method: 'POST',
                 body: formData
             });
@@ -227,7 +271,7 @@ class P2PClient {
     async connectToPeers(resourceId) {
         try {
             // Get peer list from tracker
-            const response = await apiCall(`${API_CONFIG.BASE_URL}/api/p2p/swarm/${resourceId}/peers`);
+            const response = await apiCall(`${API_CONFIG.ENDPOINTS.P2P_SWARM_PEERS(resourceId)}`);
             const peers = response.filter(peer => peer.user_id !== this.userId && peer.status === 'seeding');
             
             // Connect to up to maxPeers
@@ -571,7 +615,7 @@ P2PClient.createWithAuth = function(trackerUrl = null) {
     }
     
     const userId = auth.getUserId();
-    const url = trackerUrl || `ws://${window.location.host}/api/p2p/ws`;
+    const url = trackerUrl || API_CONFIG.ENDPOINTS.P2P_WS();
     
     return new P2PClient(userId, url);
 };
@@ -608,4 +652,10 @@ document.addEventListener('DOMContentLoaded', function() {
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { P2PClient, getP2PClient };
+}
+
+// Export for browser usage
+if (typeof window !== 'undefined') {
+    window.P2PClient = P2PClient;
+    window.getP2PClient = getP2PClient;
 }

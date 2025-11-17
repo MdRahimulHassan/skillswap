@@ -27,14 +27,16 @@ class AuthManager {
     }
 
     // Set authentication data
-    setAuth(userData) {
+    setAuth(userData, rememberMe = false) {
+        const expirationHours = rememberMe ? 30 * 24 : 24; // 30 days or 24 hours
         const authData = {
             user_id: userData.user_id,
             username: userData.username,
             email: userData.email || null,
             authenticated: true,
+            rememberMe: rememberMe,
             loginTime: new Date().toISOString(),
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+            expiresAt: new Date(Date.now() + expirationHours * 60 * 60 * 1000).toISOString()
         };
 
         localStorage.setItem(this.storageKey, JSON.stringify(authData));
@@ -102,9 +104,27 @@ class AuthManager {
     refreshSession() {
         const auth = this.getAuth();
         if (auth) {
-            auth.expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-            this.setAuth(auth);
+            const expirationHours = auth.rememberMe ? 30 * 24 : 24;
+            auth.expiresAt = new Date(Date.now() + expirationHours * 60 * 60 * 1000).toISOString();
+            this.setAuth(auth, auth.rememberMe);
         }
+    }
+
+    // Save email for convenience
+    saveEmail(email) {
+        if (email) {
+            localStorage.setItem('skillswap_saved_email', email);
+        }
+    }
+
+    // Get saved email
+    getSavedEmail() {
+        return localStorage.getItem('skillswap_saved_email');
+    }
+
+    // Clear saved email
+    clearSavedEmail() {
+        localStorage.removeItem('skillswap_saved_email');
     }
 }
 

@@ -61,9 +61,40 @@
             transform: translateX(5px);
         }
         
+        .skill-info {
+            flex: 1;
+        }
+        
         .skill-name {
             font-weight: 500;
             color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .skill-resources {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .skill-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .manage-resources-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s;
+        }
+        
+        .manage-resources-btn:hover {
+            background: #218838;
         }
         
         .remove-skill-btn {
@@ -168,9 +199,117 @@
             cursor: pointer;
         }
         
+        .resources-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .resources-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .resources-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .resources-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e6e6ef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .resource-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid #e6e6ef;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .resource-info {
+            flex: 1;
+        }
+        
+        .resource-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .resource-stats {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .add-resource-btn {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .add-resource-btn:hover {
+            background: #3f45a5;
+        }
+        
+        .remove-resource-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s;
+        }
+        
+        .remove-resource-btn:hover {
+            background: #c82333;
+        }
+        
+        .no-resources {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+        
         @media (max-width: 768px) {
             .skills-container {
                 grid-template-columns: 1fr;
+            }
+            
+            .skill-actions {
+                flex-direction: column;
+                gap: 0.25rem;
             }
         }
     </style>
@@ -235,12 +374,31 @@
         </div>
     </div>
 
+    <!-- Manage Resources Modal -->
+    <div id="resourcesModal" class="resources-modal">
+        <div class="resources-modal-content">
+            <div class="resources-header">
+                <h3 id="resourcesModalTitle">Manage Resources</h3>
+                <button class="close-modal" onclick="closeResourcesModal()">&times;</button>
+            </div>
+            <div class="resources-list" id="resourcesList">
+                <div class="no-resources">Loading resources...</div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeResourcesModal()">Close</button>
+                <button type="button" class="add-resource-btn" onclick="addResourceToSkill()">+ Add Resource</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentSkillType = '';
+        let currentSkillName = '';
         let userSkills = {
             skills_have: [],
             skills_want: []
         };
+        let skillResources = {};
 
         // Initialize page
         function initMySkills() {
@@ -263,11 +421,33 @@
                 const response = await apiCall(`${API_CONFIG.ENDPOINTS.SKILLS_USER}?user_id=${userId}`);
                 
                 userSkills = response;
+                
+                // Load skill resources
+                await loadSkillResources(userId);
+                
                 renderSkills();
             } catch (error) {
                 handleError(error, 'Load Skills');
             } finally {
                 loading.hideGlobal();
+            }
+        }
+
+        // Load resources for all skills
+        async function loadSkillResources(userId) {
+            try {
+                const response = await apiCall(`${API_CONFIG.ENDPOINTS.SKILL_RESOURCES_ALL}?user_id=${userId}`);
+                
+                skillResources = {};
+                response.forEach(item => {
+                    if (!skillResources[item.skill_name]) {
+                        skillResources[item.skill_name] = [];
+                    }
+                    skillResources[item.skill_name].push(item);
+                });
+            } catch (error) {
+                console.error('Failed to load skill resources:', error);
+                skillResources = {};
             }
         }
 
@@ -285,12 +465,21 @@
                 return;
             }
             
-            container.innerHTML = skills.map(skill => `
-                <div class="skill-item">
-                    <span class="skill-name">${escapeHtml(skill)}</span>
-                    <button class="remove-skill-btn" onclick="removeSkill('${skillType}', '${escapeHtml(skill)}')">Remove</button>
-                </div>
-            `).join('');
+            container.innerHTML = skills.map(skill => {
+                const resourceCount = skillResources[skill] ? skillResources[skill].length : 0;
+                return `
+                    <div class="skill-item">
+                        <div class="skill-info">
+                            <div class="skill-name">${escapeHtml(skill)}</div>
+                            <div class="skill-resources">${resourceCount} resource${resourceCount !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div class="skill-actions">
+                            ${skillType === 'have' ? `<button class="manage-resources-btn" onclick="manageResources('${escapeHtml(skill)}')">Manage</button>` : ''}
+                            <button class="remove-skill-btn" onclick="removeSkill('${skillType}', '${escapeHtml(skill)}')">Remove</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Open add skill modal
@@ -313,6 +502,91 @@
         function closeAddSkillModal() {
             document.getElementById('addSkillModal').style.display = 'none';
             currentSkillType = '';
+        }
+
+        // Manage resources for a skill
+        async function manageResources(skillName) {
+            currentSkillName = skillName;
+            const modal = document.getElementById('resourcesModal');
+            const title = document.getElementById('resourcesModalTitle');
+            
+            title.textContent = `Manage Resources for ${skillName}`;
+            document.getElementById('resourcesModal').style.display = 'block';
+            
+            await loadSkillResourcesList(skillName);
+        }
+
+        // Load resources for a specific skill
+        async function loadSkillResourcesList(skillName) {
+            try {
+                const userId = auth.getUserId();
+                const resources = await apiCall(`${API_CONFIG.ENDPOINTS.SKILL_RESOURCES}?user_id=${userId}&skill_name=${encodeURIComponent(skillName)}`);
+                renderResourcesList(resources);
+            } catch (error) {
+                console.error('Failed to load skill resources:', error);
+                document.getElementById('resourcesList').innerHTML = '<div class="no-resources">Failed to load resources</div>';
+            }
+        }
+
+        // Render resources list in modal
+        function renderResourcesList(resources) {
+            const container = document.getElementById('resourcesList');
+            
+            if (!resources || resources.length === 0) {
+                container.innerHTML = '<div class="no-resources">No resources added to this skill yet</div>';
+                return;
+            }
+            
+            container.innerHTML = resources.map(resource => `
+                <div class="resource-item">
+                    <div class="resource-info">
+                        <div class="resource-title">${escapeHtml(resource.title)}</div>
+                        <div class="resource-stats">
+                            📊 ${resource.rating || 0} rating • 📥 ${resource.download_count || 0} downloads • 💾 ${formatFileSize(resource.file_size)}
+                        </div>
+                    </div>
+                    <button class="remove-resource-btn" onclick="removeResourceFromSkill(${resource.resource_id})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        // Close resources modal
+        function closeResourcesModal() {
+            document.getElementById('resourcesModal').style.display = 'none';
+            currentSkillName = '';
+        }
+
+        // Add resource to skill (placeholder - would need file upload integration)
+        function addResourceToSkill() {
+            showToast('Resource upload feature coming soon! For now, you can upload files from the P2P Dashboard.', 'info');
+        }
+
+        // Remove resource from skill
+        async function removeResourceFromSkill(resourceId) {
+            if (!confirm('Are you sure you want to remove this resource from this skill?')) {
+                return;
+            }
+            
+            try {
+                loading.showGlobal('Removing resource...');
+                
+                // This would need a new endpoint to remove resource from skill
+                // For now, just show a message
+                showToast('Resource removal feature coming soon!', 'info');
+            } catch (error) {
+                handleError(error, 'Remove Resource');
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
         // Add new skill
@@ -393,9 +667,14 @@
 
         // Close modal when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('addSkillModal');
-            if (event.target === modal) {
+            const addModal = document.getElementById('addSkillModal');
+            const resourcesModal = document.getElementById('resourcesModal');
+            
+            if (event.target === addModal) {
                 closeAddSkillModal();
+            }
+            if (event.target === resourcesModal) {
+                closeResourcesModal();
             }
         }
 

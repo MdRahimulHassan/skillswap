@@ -21,12 +21,25 @@ type SkillResponse struct {
 }
 
 type SkillSearchResult struct {
-	UserID       int    `json:"user_id"`
-	Username     string `json:"username"`
-	Name         string `json:"name"`
-	ProfilePhoto string `json:"profile_photo"`
-	Skill        string `json:"skill"`
-	SkillType    string `json:"skill_type"`
+	UserID       int                 `json:"user_id"`
+	Username     string              `json:"username"`
+	Name         string              `json:"name"`
+	ProfilePhoto string              `json:"profile_photo"`
+	Skill        string              `json:"skill"`
+	SkillType    string              `json:"skill_type"`
+	P2PResources []SkillResourceInfo `json:"p2p_resources,omitempty"`
+}
+
+type SkillResourceInfo struct {
+	ResourceID      int     `json:"resource_id"`
+	Title           string  `json:"title"`
+	FileSize        int64   `json:"file_size"`
+	Seeders         int     `json:"seeders"`
+	Leechers        int     `json:"leechers"`
+	DifficultyLevel string  `json:"difficulty_level"`
+	IsPublic        bool    `json:"is_public"`
+	AutoApprove     bool    `json:"auto_approve"`
+	AverageRating   float64 `json:"average_rating"`
 }
 
 // Add skill to user's profile
@@ -234,12 +247,12 @@ func SearchSkills(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Search in both skills_have and skills_want columns
+	// Search in both skills_have and skills_want columns with P2P resource info
 	rows, err := db.DB.Query(`
-		SELECT id, username, name, profile_photo, skills_have, skills_want
-		FROM users 
-		WHERE skills_have ILIKE $1 OR skills_want ILIKE $1
-		ORDER BY username
+		SELECT u.id, u.username, u.name, u.profile_photo, u.skills_have, u.skills_want
+		FROM users u
+		WHERE u.skills_have ILIKE $1 OR u.skills_want ILIKE $1
+		ORDER BY u.username
 	`, "%"+query+"%")
 	if err != nil {
 		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
@@ -287,6 +300,9 @@ func SearchSkills(w http.ResponseWriter, r *http.Request) {
 			for _, haveSkill := range haveSkills {
 				trimmedSkill := strings.TrimSpace(haveSkill)
 				if strings.Contains(strings.ToLower(trimmedSkill), strings.ToLower(query)) {
+					// Get P2P resources for this skill
+					p2pResources := getP2PResourcesForSkill(userID, trimmedSkill)
+
 					results = append(results, SkillSearchResult{
 						UserID:       userID,
 						Username:     username,
@@ -294,6 +310,7 @@ func SearchSkills(w http.ResponseWriter, r *http.Request) {
 						ProfilePhoto: profilePhotoStr,
 						Skill:        trimmedSkill,
 						SkillType:    "have",
+						P2PResources: p2pResources,
 					})
 				}
 			}
@@ -378,4 +395,41 @@ func GetUserSkills(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// Helper function to get P2P resources for a specific skill and user
+func getP2PResourcesForSkill(userID int, skillName string) []SkillResourceInfo {
+	rows, err := db.DB.Query(`
+		SELECT sr.resource_id, r.title, r.file_size, s.total_seeders, s.total_leechers,
+			   sr.difficulty_level, sr.is_public, sr.auto_approve,
+			   COALESCE(AVG(rr.rating), 0) as average_rating
+		FROM skill_resources sr
+		JOIN resources r ON sr.resource_id = r.id
+		LEFT JOIN swarms s ON r.id = s.resource_id
+		LEFT JOIN resource_ratings rr ON r.id = rr.resource_id
+		WHERE sr.owner_id = $1 AND sr.skill_name = $2
+		GROUP BY sr.resource_id, r.title, r.file_size, s.total_seeders, s.total_leechers,
+				 sr.difficulty_level, sr.is_public, sr.auto_approve
+	`, userID, skillName)
+
+	if err != nil {
+		return []SkillResourceInfo{}
+	}
+	defer rows.Close()
+
+	var resources []SkillResourceInfo
+	for rows.Next() {
+		var resource SkillResourceInfo
+		err := rows.Scan(
+			&resource.ResourceID, &resource.Title, &resource.FileSize,
+			&resource.Seeders, &resource.Leechers, &resource.DifficultyLevel,
+			&resource.IsPublic, &resource.AutoApprove, &resource.AverageRating,
+		)
+		if err != nil {
+			continue
+		}
+		resources = append(resources, resource)
+	}
+
+	return resources
 }

@@ -58,6 +58,9 @@ class CommonNavbar {
                         <a href="p2p-dashboard.html" data-page="p2p-dashboard">
                             <i class="fas fa-network-wired"></i> P2P Network
                         </a>
+                        <a href="manage-connections.html" data-page="manage-connections">
+                            <i class="fas fa-user-friends"></i> Connections
+                        </a>
                         <a href="#" onclick="commonNavbar.logout()" class="logout-link">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </a>

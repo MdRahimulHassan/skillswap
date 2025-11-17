@@ -11,6 +11,11 @@ type User struct {
 	SkillsHave   string `json:"skills_have"`
 	SkillsWant   string `json:"skills_want"`
 	CreatedAt    string `json:"created_at,omitempty"`
+	Bio          string `json:"bio,omitempty"`
+	Location     string `json:"location,omitempty"`
+	Availability string `json:"availability,omitempty"`
+	LinkedIn     string `json:"linkedin,omitempty"`
+	Github       string `json:"github,omitempty"`
 }
 
 type UserDB struct {
@@ -22,4 +27,9 @@ type UserDB struct {
 	SkillsHave   sql.NullString `json:"skills_have"`
 	SkillsWant   sql.NullString `json:"skills_want"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
+	Bio          sql.NullString `json:"bio"`
+	Location     sql.NullString `json:"location"`
+	Availability sql.NullString `json:"availability"`
+	LinkedIn     sql.NullString `json:"linkedin"`
+	Github       sql.NullString `json:"github"`
 }

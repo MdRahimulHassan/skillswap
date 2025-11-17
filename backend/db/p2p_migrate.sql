@@ -72,6 +72,19 @@ CREATE TABLE IF NOT EXISTS resource_ratings (
     UNIQUE(resource_id, user_id)
 );
 
+-- P2P connection requests between users
+CREATE TABLE IF NOT EXISTS p2p_requests (
+    id SERIAL PRIMARY KEY,
+    requester_id INT REFERENCES users(id) ON DELETE CASCADE,
+    target_user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    skill VARCHAR(100) NOT NULL,
+    message TEXT,
+    status VARCHAR(20) DEFAULT 'pending', -- pending, approved, rejected
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(requester_id, target_user_id, skill, status)
+);
+
 -- Create indexes for P2P tables if they don't exist
 CREATE INDEX IF NOT EXISTS idx_resources_category ON resources(skill_category);
 CREATE INDEX IF NOT EXISTS idx_resources_tags ON resources USING GIN(tags);
@@ -79,6 +92,10 @@ CREATE INDEX IF NOT EXISTS idx_resources_hash ON resources(file_hash);
 CREATE INDEX IF NOT EXISTS idx_peer_participation_user ON peer_participation(user_id);
 CREATE INDEX IF NOT EXISTS idx_peer_participation_resource ON peer_participation(resource_id);
 CREATE INDEX IF NOT EXISTS idx_peer_participation_status ON peer_participation(status);
+CREATE INDEX IF NOT EXISTS idx_p2p_requests_requester ON p2p_requests(requester_id);
+CREATE INDEX IF NOT EXISTS idx_p2p_requests_target ON p2p_requests(target_user_id);
+CREATE INDEX IF NOT EXISTS idx_p2p_requests_status ON p2p_requests(status);
+CREATE INDEX IF NOT EXISTS idx_p2p_requests_skill ON p2p_requests(skill);
 
 -- Migration: Convert existing skills to resources
 -- This creates placeholder resources for users who have skills

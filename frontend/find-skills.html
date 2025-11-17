@@ -162,6 +162,173 @@
             background: #218838;
         }
         
+        .p2p-btn {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            width: 100%;
+        }
+        
+        .p2p-btn:hover {
+            background: #3f45a5;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .resource-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e6e6ef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .resource-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid #e6e6ef;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .resource-item:hover {
+            background: #f8f9ff;
+            border-color: #4e54c8;
+        }
+        
+        .resource-item.selected {
+            background: #eef2ff;
+            border-color: #4e54c8;
+        }
+        
+        .resource-info {
+            flex: 1;
+        }
+        
+        .resource-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .resource-stats {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .request-message {
+            width: 100%;
+            min-height: 80px;
+            padding: 0.75rem;
+            border: 1px solid #e6e6ef;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+        
+        .request-message:focus {
+            outline: none;
+            border-color: #4e54c8;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+        
+        .btn-send {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .btn-send:hover {
+            background: #3f45a5;
+        }
+        
+        .btn-send:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
         .no-results {
             text-align: center;
             color: #666;
@@ -242,8 +409,43 @@
         </div>
     </div>
 
+    <!-- P2P Request Modal -->
+    <div id="p2pRequestModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Request Learning Resources</h3>
+                <button class="close-btn" onclick="closeP2PModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>From:</strong> <span id="modalTargetUser"></span></p>
+                <p><strong>Skill:</strong> <span id="modalSkill"></span></p>
+                
+                <div class="resource-list" id="modalResourceList">
+                    <div class="no-results">Loading available resources...</div>
+                </div>
+                
+                <label for="requestMessage"><strong>Message (optional):</strong></label>
+                <textarea 
+                    id="requestMessage" 
+                    class="request-message" 
+                    placeholder="Introduce yourself and explain why you're interested in these resources..."
+                ></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeP2PModal()">Cancel</button>
+                <button class="btn-send" id="sendRequestBtn" onclick="sendP2PRequest()">Send Request</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let searchResults = [];
+        let currentP2PRequest = {
+            targetUserId: null,
+            targetUserName: null,
+            skill: null,
+            selectedResources: []
+        };
 
         // Initialize page
         function initFindSkills() {
@@ -318,7 +520,12 @@
                 userGroups[result.user_id].skills.push(result);
             });
             
-            resultsContainer.innerHTML = Object.values(userGroups).map(user => `
+            resultsContainer.innerHTML = Object.values(userGroups).map(user => {
+                // Get the first skill that user 'has' for connection requests
+                const firstHaveSkill = user.skills.find(skill => skill.skill_type === 'have');
+                const skillName = firstHaveSkill ? firstHaveSkill.skill : user.skills[0]?.skill || '';
+                
+                return `
                 <div class="skill-result">
                     <div class="user-avatar">
                         ${user.profile_photo ? 
@@ -338,12 +545,139 @@
                         </div>
                     </div>
                     <div class="skill-actions">
+                        ${firstHaveSkill ? `
+                            <button class="connect-btn" onclick="requestP2PConnection(${user.user_id}, '${escapeHtml(user.name || user.username)}', '${escapeHtml(skillName)}')">
+                                📁 Request Resources
+                            </button>
+                        ` : ''}
                         <a href="chat.html" class="connect-btn" onclick="startChat(${user.user_id}, '${escapeHtml(user.name || user.username)}')">
-                            💬 Connect
+                            💬 Chat
                         </a>
                     </div>
                 </div>
+                `;
+            }).join('');
+        }
+
+        // Request P2P connection for resources
+        async function requestP2PConnection(targetUserId, targetUserName, skill) {
+            currentP2PRequest = {
+                targetUserId: targetUserId,
+                targetUserName: targetUserName,
+                skill: skill,
+                selectedResources: []
+            };
+            
+            // Show modal
+            document.getElementById('modalTargetUser').textContent = targetUserName;
+            document.getElementById('modalSkill').textContent = skill;
+            document.getElementById('p2pRequestModal').style.display = 'block';
+            
+            // Load user's resources for this skill
+            await loadUserResources(targetUserId, skill);
+        }
+
+        // Load user's resources for a specific skill
+        async function loadUserResources(userId, skill) {
+            try {
+                const resources = await apiCall(`${API_CONFIG.ENDPOINTS.SKILL_RESOURCES}?user_id=${userId}&skill_name=${encodeURIComponent(skill)}`);
+                renderResourceList(resources);
+            } catch (error) {
+                console.error('Failed to load resources:', error);
+                document.getElementById('modalResourceList').innerHTML = '<div class="no-results">No resources available for this skill</div>';
+            }
+        }
+
+        // Render resource list in modal
+        function renderResourceList(resources) {
+            const container = document.getElementById('modalResourceList');
+            
+            if (!resources || resources.length === 0) {
+                container.innerHTML = '<div class="no-results">No resources available for this skill</div>';
+                return;
+            }
+            
+            container.innerHTML = resources.map(resource => `
+                <div class="resource-item" onclick="toggleResourceSelection(${resource.resource_id}, this)">
+                    <div class="resource-info">
+                        <div class="resource-title">${escapeHtml(resource.title)}</div>
+                        <div class="resource-stats">
+                            📊 ${resource.rating || 0} rating • 📥 ${resource.download_count || 0} downloads • 💾 ${formatFileSize(resource.file_size)}
+                        </div>
+                    </div>
+                    <input type="checkbox" id="resource_${resource.resource_id}" style="margin-left: 1rem;">
+                </div>
             `).join('');
+        }
+
+        // Toggle resource selection
+        function toggleResourceSelection(resourceId, element) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            const index = currentP2PRequest.selectedResources.indexOf(resourceId);
+            
+            if (index > -1) {
+                currentP2PRequest.selectedResources.splice(index, 1);
+                element.classList.remove('selected');
+                checkbox.checked = false;
+            } else {
+                currentP2PRequest.selectedResources.push(resourceId);
+                element.classList.add('selected');
+                checkbox.checked = true;
+            }
+        }
+
+        // Close P2P modal
+        function closeP2PModal() {
+            document.getElementById('p2pRequestModal').style.display = 'none';
+            currentP2PRequest = {
+                targetUserId: null,
+                targetUserName: null,
+                skill: null,
+                selectedResources: []
+            };
+        }
+
+        // Send P2P connection request
+        async function sendP2PRequest() {
+            const message = document.getElementById('requestMessage').value.trim();
+            const sendBtn = document.getElementById('sendRequestBtn');
+            
+            try {
+                sendBtn.disabled = true;
+                sendBtn.textContent = 'Sending...';
+                
+                const response = await apiCall(API_CONFIG.ENDPOINTS.P2P_CONNECTIONS, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        requester_id: auth.getUserId(),
+                        target_user_id: currentP2PRequest.targetUserId,
+                        skill: currentP2PRequest.skill,
+                        resource_ids: currentP2PRequest.selectedResources,
+                        message: message || `Hi ${currentP2PRequest.targetUserName}! I'm interested in learning about ${currentP2PRequest.skill}.`
+                    })
+                });
+                
+                if (response.success) {
+                    showToast(`Connection request sent to ${currentP2PRequest.targetUserName}!`, 'success');
+                    closeP2PModal();
+                } else {
+                    showToast(response.message || 'Failed to send request', 'error');
+                }
+            } catch (error) {
+                handleError(error, 'P2P Connection Request');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send Request';
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
         // Start chat with user

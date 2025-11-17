@@ -15,6 +15,12 @@
     <form id="loginForm" onsubmit="event.preventDefault(); login();">
         <input id="email" name="email" type="email" placeholder="Email" required>
         <input id="password" name="password" type="password" placeholder="Password" required>
+        
+        <div class="remember-me-container">
+            <input type="checkbox" id="rememberMe" name="rememberMe">
+            <label for="rememberMe">Remember me for 30 days</label>
+        </div>
+        
         <button id="loginBtn" type="submit" class="btn-primary">Login</button>
     </form>
 
@@ -28,6 +34,7 @@
 async function login() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
+    const rememberMe = document.getElementById("rememberMe").checked;
 
     // Validate form
     const validation = validateForm('loginForm', {
@@ -51,8 +58,15 @@ async function login() {
             })
         });
         
+        // Save email for convenience if remember me is checked
+        if (rememberMe) {
+            auth.saveEmail(email);
+        } else {
+            auth.clearSavedEmail();
+        }
+
         // Store authentication data using auth manager
-        auth.setAuth(data);
+        auth.setAuth(data, rememberMe);
         
         showToast('Login successful!', 'success');
         
@@ -67,6 +81,15 @@ async function login() {
         loading.hide('loginBtn');
     }
 }
+
+// Pre-fill email field if saved
+document.addEventListener('DOMContentLoaded', function() {
+    const savedEmail = auth.getSavedEmail();
+    if (savedEmail) {
+        document.getElementById('email').value = savedEmail;
+        document.getElementById('rememberMe').checked = true;
+    }
+});
 </script>
 
 </body>

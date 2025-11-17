@@ -536,7 +536,7 @@
             }
             
             // Initialize P2P client
-            p2pClient = new P2PClient(auth.getUserId(), API_CONFIG.ENDPOINTS.WS());
+            p2pClient = initializeGlobalP2PClient();
             
             // Setup P2P event listeners
             setupP2PEventListeners();
@@ -604,7 +604,7 @@
                 if (difficulty) params.append('difficulty', difficulty);
                 if (minSeeders) params.append('min_seeders', minSeeders);
                 
-                const url = `${API_CONFIG.BASE_URL}/api/p2p/resources${params.toString() ? '?' + params.toString() : ''}`;
+                const url = `${API_CONFIG.ENDPOINTS.P2P_RESOURCES}${params.toString() ? '?' + params.toString() : ''}`;
                 const results = await apiCall(url);
                 
                 searchResults = results;
@@ -681,8 +681,12 @@
         // Start downloading a resource
         async function startDownload(resourceId, resourceTitle) {
             if (!p2pClient) {
-                showToast('P2P client not initialized', 'error');
-                return;
+                // Try to initialize P2P client - every user is a P2P client
+                p2pClient = initializeGlobalP2PClient();
+                if (!p2pClient) {
+                    showToast('P2P client not available', 'error');
+                    return;
+                }
             }
             
             try {
@@ -736,7 +740,7 @@
         // View resource details
         async function viewResourceDetails(resourceId) {
             try {
-                const resource = await apiCall(`${API_CONFIG.BASE_URL}/api/p2p/resource/${resourceId}`);
+                const resource = await apiCall(`${API_CONFIG.ENDPOINTS.P2P_RESOURCE(resourceId)}`);
                 
                 // Show details modal or navigate to details page
                 alert(`Resource Details:\n\nTitle: ${resource.title}\nDescription: ${resource.description}\nSize: ${formatFileSize(resource.file_size)}\nPieces: ${resource.piece_count}\nSeeders: ${resource.seeders || 0}\nLeechers: ${resource.leechers || 0}`);
@@ -751,8 +755,12 @@
             e.preventDefault();
             
             if (!p2pClient) {
-                showToast('P2P client not initialized', 'error');
-                return;
+                // Try to initialize P2P client - every user is a P2P client
+                p2pClient = initializeGlobalP2PClient();
+                if (!p2pClient) {
+                    showToast('P2P client not available', 'error');
+                    return;
+                }
             }
             
             try {
@@ -814,6 +822,9 @@
             if (p2pClient) {
                 p2pClient.disconnect();
             }
+            // Clear global P2P client
+            globalP2PClient = null;
+            window.p2pClient = null;
             auth.logout();
         }
 

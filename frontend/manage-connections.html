@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Connections - SkillSwap</title>
+    <link rel="stylesheet" href="css/unified.css">
+    <style>
+        .connections-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .connections-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .connections-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .connections-header h2 {
+            color: #4e54c8;
+            margin: 0;
+        }
+        
+        .refresh-btn {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background: #3f45a5;
+        }
+        
+        .connection-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4e54c8;
+            transition: transform 0.2s;
+        }
+        
+        .connection-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .connection-info {
+            flex: 1;
+        }
+        
+        .connection-user {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .connection-skill {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+        
+        .connection-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .connection-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        
+        .approve-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .approve-btn:hover {
+            background: #218838;
+        }
+        
+        .reject-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .reject-btn:hover {
+            background: #c82333;
+        }
+        
+        .chat-btn {
+            background: #4e54c8;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .chat-btn:hover {
+            background: #3f45a5;
+        }
+        
+        .no-connections {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 2rem;
+        }
+        
+        .connection-date {
+            font-size: 0.8rem;
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .connections-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .connection-actions {
+                flex-direction: row;
+                align-items: center;
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+</head>
+<body>
+    <!-- Common Navbar will be inserted here by JavaScript -->
+    <script src="js/common-navbar.js"></script>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Main Content -->
+    <div class="main">
+        <h2>Manage Connections</h2>
+        <p>Manage your P2P connection requests and approved connections.</p>
+
+        <div class="connections-container">
+            <!-- Received Requests -->
+            <div class="connections-section">
+                <div class="connections-header">
+                    <h2>📥 Received Requests</h2>
+                    <button class="refresh-btn" onclick="loadConnections()">🔄 Refresh</button>
+                </div>
+                <div id="receivedRequests">
+                    <div class="no-connections">Loading received requests...</div>
+                </div>
+            </div>
+
+            <!-- Sent Requests -->
+            <div class="connections-section">
+                <div class="connections-header">
+                    <h2>📤 Sent Requests</h2>
+                    <button class="refresh-btn" onclick="loadConnections()">🔄 Refresh</button>
+                </div>
+                <div id="sentRequests">
+                    <div class="no-connections">Loading sent requests...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let connections = {
+            received: [],
+            sent: []
+        };
+
+        // Initialize page
+        function initManageConnections() {
+            if (!auth.requireAuth()) return;
+            
+            const username = auth.getUsername();
+            const profileBtn = document.getElementById("profileBtn");
+            if (profileBtn) {
+                profileBtn.textContent = username;
+            }
+            
+            loadConnections();
+        }
+
+        // Load connections
+        async function loadConnections() {
+            try {
+                loading.showGlobal('Loading connections...');
+                const userId = auth.getUserId();
+                
+                // Load received requests
+                const receivedResponse = await apiCall(`${API_CONFIG.ENDPOINTS.P2P_CONNECTIONS}?user_id=${userId}&type=received`);
+                connections.received = receivedResponse;
+                
+                // Load sent requests
+                const sentResponse = await apiCall(`${API_CONFIG.ENDPOINTS.P2P_CONNECTIONS}?user_id=${userId}&type=sent`);
+                connections.sent = sentResponse;
+                
+                renderConnections();
+            } catch (error) {
+                handleError(error, 'Load Connections');
+                document.getElementById('receivedRequests').innerHTML = '<div class="no-connections">Error loading connections</div>';
+                document.getElementById('sentRequests').innerHTML = '<div class="no-connections">Error loading connections</div>';
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Render connections
+        function renderConnections() {
+            renderReceivedRequests();
+            renderSentRequests();
+        }
+
+        // Render received requests
+        function renderReceivedRequests() {
+            const container = document.getElementById('receivedRequests');
+            
+            if (!connections.received || connections.received.length === 0) {
+                container.innerHTML = '<div class="no-connections">No received requests</div>';
+                return;
+            }
+            
+            container.innerHTML = connections.received.map(connection => `
+                <div class="connection-item">
+                    <div class="connection-info">
+                        <div class="connection-user">${escapeHtml(connection.requester_name)}</div>
+                        <div class="connection-skill">🎯 ${escapeHtml(connection.skill_name)}</div>
+                        <div class="connection-date">📅 ${formatDate(connection.created_at)}</div>
+                        <span class="connection-status status-${connection.status}">${connection.status}</span>
+                    </div>
+                    <div class="connection-actions">
+                        ${connection.status === 'pending' ? `
+                            <button class="approve-btn" onclick="respondToConnection(${connection.id}, 'approve')">✅ Approve</button>
+                            <button class="reject-btn" onclick="respondToConnection(${connection.id}, 'reject')">❌ Reject</button>
+                        ` : connection.status === 'approved' ? `
+                            <a href="chat.html" class="chat-btn" onclick="startChat(${connection.requester_id}, '${escapeHtml(connection.requester_name)}')">💬 Chat</a>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render sent requests
+        function renderSentRequests() {
+            const container = document.getElementById('sentRequests');
+            
+            if (!connections.sent || connections.sent.length === 0) {
+                container.innerHTML = '<div class="no-connections">No sent requests</div>';
+                return;
+            }
+            
+            container.innerHTML = connections.sent.map(connection => `
+                <div class="connection-item">
+                    <div class="connection-info">
+                        <div class="connection-user">${escapeHtml(connection.target_name)}</div>
+                        <div class="connection-skill">🎯 ${escapeHtml(connection.skill_name)}</div>
+                        <div class="connection-date">📅 ${formatDate(connection.created_at)}</div>
+                        <span class="connection-status status-${connection.status}">${connection.status}</span>
+                    </div>
+                    <div class="connection-actions">
+                        ${connection.status === 'approved' ? `
+                            <a href="chat.html" class="chat-btn" onclick="startChat(${connection.target_user_id}, '${escapeHtml(connection.target_name)}')">💬 Chat</a>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Respond to connection request
+        async function respondToConnection(connectionId, response) {
+            const userId = auth.getUserId();
+            const action = response === 'approve' ? 'approve' : 'reject';
+            
+            if (!confirm(`Are you sure you want to ${action} this connection request?`)) {
+                return;
+            }
+            
+            try {
+                loading.showGlobal(`${action.charAt(0).toUpperCase() + action.slice(1)}ing request...`);
+                
+                const result = await apiCall(API_CONFIG.ENDPOINTS.P2P_CONNECTIONS_RESPOND, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        request_id: connectionId,
+                        user_id: userId,
+                        response: response
+                    })
+                });
+                
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    loadConnections(); // Reload connections
+                } else {
+                    showToast(result.message || 'Failed to respond to request', 'error');
+                }
+            } catch (error) {
+                handleError(error, 'Respond to Connection');
+            } finally {
+                loading.hideGlobal();
+            }
+        }
+
+        // Start chat with user
+        function startChat(userId, userName) {
+            // Store target user info for chat page
+            localStorage.setItem('chat_target_user', JSON.stringify({
+                user_id: userId,
+                name: userName
+            }));
+            
+            showToast(`Opening chat with ${userName}...`, 'success');
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) {
+                return 'Yesterday';
+            } else if (diffDays < 7) {
+                return `${diffDays} days ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+
+        // Utility function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Logout function
+        function logout() {
+            auth.logout();
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initManageConnections);
+    </script>
+</body>
+</html>

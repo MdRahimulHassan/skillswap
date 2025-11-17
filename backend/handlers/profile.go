@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -52,7 +53,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	var userDB models.UserDB
 	err = db.DB.QueryRow(`
-        SELECT id, username, email, name, profile_photo, skills_have, skills_want, created_at
+        SELECT id, username, email, name, profile_photo, skills_have, skills_want, created_at, bio, location, availability, linkedin, github
         FROM users WHERE id = $1
     `, id).Scan(
 		&userDB.ID,
@@ -63,6 +64,11 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		&userDB.SkillsHave,
 		&userDB.SkillsWant,
 		&userDB.CreatedAt,
+		&userDB.Bio,
+		&userDB.Location,
+		&userDB.Availability,
+		&userDB.LinkedIn,
+		&userDB.Github,
 	)
 
 	// Convert to User model (handling NULL values)
@@ -75,6 +81,11 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		SkillsHave:   nullStringToString(userDB.SkillsHave),
 		SkillsWant:   nullStringToString(userDB.SkillsWant),
 		CreatedAt:    nullTimeToString(userDB.CreatedAt),
+		Bio:          nullStringToString(userDB.Bio),
+		Location:     nullStringToString(userDB.Location),
+		Availability: nullStringToString(userDB.Availability),
+		LinkedIn:     nullStringToString(userDB.LinkedIn),
+		Github:       nullStringToString(userDB.Github),
 	}
 
 	if err != nil {
@@ -126,6 +137,11 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	photo := r.FormValue("profile_photo")
 	skillsHave := r.FormValue("skills_have")
 	skillsWant := r.FormValue("skills_want")
+	bio := r.FormValue("bio")
+	location := r.FormValue("location")
+	availability := r.FormValue("availability")
+	linkedin := r.FormValue("linkedin")
+	github := r.FormValue("github")
 
 	// Execute update query
 	result, err := db.DB.Exec(`
@@ -133,9 +149,14 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
             name=$1, 
             profile_photo=$2,
             skills_have=$3,
-            skills_want=$4
-        WHERE id=$5
-    `, name, photo, skillsHave, skillsWant, id)
+            skills_want=$4,
+            bio=$5,
+            location=$6,
+            availability=$7,
+            linkedin=$8,
+            github=$9
+        WHERE id=$10
+    `, name, photo, skillsHave, skillsWant, bio, location, availability, linkedin, github, id)
 
 	if err != nil {
 		log.Printf("Database error updating profile: %v", err)
@@ -247,6 +268,156 @@ func UploadProfilePhoto(w http.ResponseWriter, r *http.Request) {
 		"status":    "success",
 		"message":   "Profile photo updated successfully",
 		"photo_url": photoURL,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// Helper function to get user's skills with resources
+func GetUserSkillsWithResources(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		http.Error(w, "user_id is required", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil || userID <= 0 {
+		http.Error(w, "Invalid user_id", http.StatusBadRequest)
+		return
+	}
+
+	// Get user's skills and associated resources
+	type SkillWithResources struct {
+		SkillName string                   `json:"skill_name"`
+		SkillType string                   `json:"skill_type"`
+		Resources []map[string]interface{} `json:"resources,omitempty"`
+	}
+
+	var skills []SkillWithResources
+
+	// Get skills_have
+	var skillsHaveStr string
+	err = db.DB.QueryRow("SELECT skills_have FROM users WHERE id = $1", userID).Scan(&skillsHaveStr)
+	if err != nil && err != sql.ErrNoRows {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if skillsHaveStr != "" {
+		haveSkills := strings.Split(skillsHaveStr, ",")
+		for _, skill := range haveSkills {
+			skill = strings.TrimSpace(skill)
+			if skill != "" {
+				// Get resources for this skill
+				resources := []map[string]interface{}{}
+				rows, err := db.DB.Query(`
+					SELECT r.id, r.title, r.file_size, r.difficulty_level, r.rating, r.download_count
+					FROM skill_resources sr
+					JOIN resources r ON sr.resource_id = r.id
+					WHERE sr.skill_name = $1 AND sr.owner_id = $2
+					ORDER BY r.created_at DESC
+				`, skill, userID)
+				if err == nil {
+					defer rows.Close()
+					for rows.Next() {
+						var resource map[string]interface{}
+						var id, title string
+						var fileSize int64
+						var difficultyLevel string
+						var rating float64
+						var downloadCount int
+
+						err := rows.Scan(&id, &title, &fileSize, &difficultyLevel, &rating, &downloadCount)
+						if err == nil {
+							resource["id"] = id
+							resource["title"] = title
+							resource["file_size"] = fileSize
+							resource["difficulty_level"] = difficultyLevel
+							resource["rating"] = rating
+							resource["download_count"] = downloadCount
+						}
+						resources = append(resources, resource)
+					}
+				}
+
+				skills = append(skills, SkillWithResources{
+					SkillName: skill,
+					SkillType: "have",
+					Resources: resources,
+				})
+			}
+		}
+	}
+
+	// Get skills_want
+	var skillsWantStr string
+	err = db.DB.QueryRow("SELECT skills_want FROM users WHERE id = $1", userID).Scan(&skillsWantStr)
+	if err != nil && err != sql.ErrNoRows {
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if skillsWantStr != "" {
+		wantSkills := strings.Split(skillsWantStr, ",")
+		for _, skill := range wantSkills {
+			skill = strings.TrimSpace(skill)
+			if skill != "" {
+				// Get resources for this skill from other users
+				resources := []map[string]interface{}{}
+				rows, err := db.DB.Query(`
+					SELECT r.id, r.title, r.file_size, r.difficulty_level, r.rating, r.download_count, u.username, u.name
+					FROM skill_resources sr
+					JOIN resources r ON sr.resource_id = r.id
+					JOIN users u ON sr.owner_id = u.id
+					WHERE sr.skill_name = $1 AND sr.is_public = true AND sr.owner_id != $2
+					ORDER BY r.created_at DESC
+					LIMIT 5
+				`, skill, userID)
+				if err == nil {
+					defer rows.Close()
+					for rows.Next() {
+						var resource map[string]interface{}
+						var id, title string
+						var fileSize int64
+						var difficultyLevel string
+						var rating float64
+						var downloadCount int
+						var username, ownerName string
+
+						err := rows.Scan(&id, &title, &fileSize, &difficultyLevel, &rating, &downloadCount, &username, &ownerName)
+						if err == nil {
+							resource["id"] = id
+							resource["title"] = title
+							resource["file_size"] = fileSize
+							resource["difficulty_level"] = difficultyLevel
+							resource["rating"] = rating
+							resource["download_count"] = downloadCount
+							resource["owner_username"] = username
+							resource["owner_name"] = ownerName
+						}
+						resources = append(resources, resource)
+					}
+				}
+
+				skills = append(skills, SkillWithResources{
+					SkillName: skill,
+					SkillType: "want",
+					Resources: resources,
+				})
+			}
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"skills_have":           skillsHaveStr,
+		"skills_want":           skillsWantStr,
+		"skills_with_resources": skills,
 	}
 	json.NewEncoder(w).Encode(response)
 }

@@ -604,8 +604,8 @@ class SwarmVisualizer {
         if (!this.selectedResource) return;
         
         try {
-            const stats = await apiCall(`${API_CONFIG.BASE_URL}/api/p2p/swarm/${this.selectedResource}/stats`);
-            const peers = await apiCall(`${API_CONFIG.BASE_URL}/api/p2p/swarm/${this.selectedResource}/peers`);
+            const stats = await apiCall(`${API_CONFIG.ENDPOINTS.P2P_SWARM_STATS(this.selectedResource)}`);
+            const peers = await apiCall(`${API_CONFIG.ENDPOINTS.P2P_SWARM_PEERS(this.selectedResource)}`);
             
             this.updateSwarm({ resourceId: this.selectedResource, stats, peers });
         } catch (error) {

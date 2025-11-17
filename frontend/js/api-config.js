@@ -29,7 +29,20 @@ const API_CONFIG = {
         P2P_SWARM_STATS: (id) => `/p2p/swarm/${id}/stats`,
         P2P_SWARM_PEERS: (id) => `/p2p/swarm/${id}/peers`,
         P2P_ANNOUNCE: '/p2p/announce',
+        P2P_REQUEST: '/p2p/request',
+        P2P_REQUESTS: '/p2p/requests',
+        P2P_REQUEST_RESPOND: '/p2p/request/respond',
         P2P_PIECE: (resourceId, pieceIndex) => `/p2p/piece/${resourceId}/${pieceIndex}`,
+        
+        // P2P Connection Management Endpoints
+        P2P_CONNECTIONS: '/p2p/connections',
+        P2P_CONNECTIONS_RESPOND: '/p2p/connections/respond',
+        P2P_CONNECTIONS_SKILLS: '/p2p/connections/skills',
+        P2P_CONNECTIONS_CHECK: '/p2p/connections/check',
+        
+        // Skill Resource Management Endpoints
+        SKILL_RESOURCES: '/skills/resources',
+        SKILL_RESOURCES_ALL: '/skills/resources/all',
         WS: () => {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'

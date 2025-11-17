@@ -359,9 +359,14 @@
                 profileBtn.textContent = username;
             }
             
-            // Initialize P2P components
-            p2pClient = new P2PClient(auth.getUserId(), API_CONFIG.ENDPOINTS.P2P_WS());
-            downloadManager = new DownloadManager(p2pClient);
+            // Initialize P2P components - every user is a P2P client
+            p2pClient = initializeGlobalP2PClient();
+            if (p2pClient) {
+                downloadManager = new DownloadManager(p2pClient);
+            } else {
+                console.error('Failed to initialize P2P client');
+                return;
+            }
             
             // Setup event listeners
             setupEventListeners();
@@ -376,6 +381,12 @@
 
         // Setup event listeners
         function setupEventListeners() {
+            // Check if P2P client is available
+            if (!p2pClient) {
+                console.error('P2P client not available');
+                return;
+            }
+            
             // P2P Client events
             p2pClient.on('peer-connected', (data) => {
                 console.log('Peer connected:', data);
@@ -414,7 +425,7 @@
         // Load user's shared resources
         async function loadMyResources() {
             try {
-                const resources = await apiCall(`${API_CONFIG.BASE_URL}/api/p2p/resources?uploader_id=${auth.getUserId()}`);
+                const resources = await apiCall(`${API_CONFIG.ENDPOINTS.P2P_RESOURCES}?uploader_id=${auth.getUserId()}`);
                 myResources = resources;
                 renderMyResources();
                 updateResourceSelect();
@@ -590,6 +601,9 @@
             if (downloadManager) {
                 downloadManager.cleanup();
             }
+            // Clear global P2P client
+            globalP2PClient = null;
+            window.p2pClient = null;
             auth.logout();
         }
 

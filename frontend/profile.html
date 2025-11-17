@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SkillSwap Profile</title>
     <link rel="stylesheet" href="css/unified.css">
+    <link rel="stylesheet" href="css/profile.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <!-- Common Navbar will be inserted here by JavaScript -->
     <script src="js/common-navbar.js"></script>
-
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- Main Content -->
     <main class="profile-container">
@@ -210,7 +208,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Edit Profile</h2>
-                <button class="close-btn" onclick="closeEditModal()">
+                <button class="close-btn" onclick="profileFunctions.closeEditModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -250,8 +248,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+                <button class="btn btn-secondary" onclick="profileFunctions.closeEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="profileFunctions.saveProfile()">Save Changes</button>
             </div>
         </div>
     </div>
@@ -261,10 +259,39 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="skillModalTitle">Add Skill</h2>
-                <button class="close-btn" onclick="closeSkillModal()">
+                <button class="close-btn" onclick="profileFunctions.closeSkillModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="skillName">Skill Name</label>
+                    <input type="text" id="skillName" placeholder="e.g., JavaScript, Design, Marketing">
+                    <div id="skillSuggestions" class="skill-suggestions">
+                        <!-- Suggestions will appear here -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="skillLevel">Proficiency Level</label>
+                    <select id="skillLevel">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="expert">Expert</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="skillDescription">Description (Optional)</label>
+                    <textarea id="skillDescription" rows="3" placeholder="Brief description of your experience..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="profileFunctions.closeSkillModal()">Cancel</button>
+                <button class="btn btn-primary" id="saveSkillBtn" onclick="profileFunctions.saveSkill()">Add Skill</button>
+            </div>
+        </div>
+    </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label for="skillName">Skill Name</label>
@@ -295,32 +322,7 @@
         </div>
     </div>
 
-    <!-- Simple Edit Form (for profile.js compatibility) -->
-    <div id="editForm" class="hidden" style="display: none; margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-        <h3>Edit Profile</h3>
-        <div style="margin-bottom: 15px;">
-            <label for="editName" style="display: block; margin-bottom: 5px; font-weight: bold;">Name:</label>
-            <input type="text" id="editName" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-        <div style="margin-bottom: 15px;">
-            <label for="editPhoto" style="display: block; margin-bottom: 5px; font-weight: bold;">Profile Photo URL:</label>
-            <input type="text" id="editPhoto" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-        <div style="margin-bottom: 15px;">
-            <label for="editSkillsHave" style="display: block; margin-bottom: 5px; font-weight: bold;">Skills I Have:</label>
-            <input type="text" id="editSkillsHave" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-        <div style="margin-bottom: 15px;">
-            <label for="editSkillsWant" style="display: block; margin-bottom: 5px; font-weight: bold;">Skills I Want:</label>
-            <input type="text" id="editSkillsWant" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-        </div>
-        <div style="margin-top: 20px;">
-            <button id="saveBtn" class="btn btn-primary" style="margin-right: 10px;">Save Changes</button>
-            <button id="editBtn" class="btn btn-secondary" onclick="document.getElementById('editForm').classList.add('hidden')">Cancel</button>
-        </div>
-    </div>
-
-    <!-- Edit Button (for profile.js compatibility) -->
+    <!-- Edit Button -->
     <button id="editBtn" class="btn btn-primary" style="margin: 10px 0;">
         <i class="fas fa-edit"></i> Edit Profile
     </button>
