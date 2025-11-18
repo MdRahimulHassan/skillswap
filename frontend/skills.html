@@ -84,22 +84,6 @@
             color: #4e54c8;
             margin: 0;
         }
-        
-        .add-skill-btn {
-            background: #4e54c8;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.3s;
-        }
-        
-        .add-skill-btn:hover {
-            background: #3f45a5;
-        }
-        
         /* Skill Items */
         .skill-item {
             display: flex;
@@ -526,7 +510,7 @@
                 <div class="skills-section">
                     <div class="skills-header">
                         <h2>🎯 Skills I Have</h2>
-                        <button class="add-skill-btn" onclick="openAddSkillModal('have')">+ Add Skill</button>
+                        <button class="btn-primary" onclick="openAddSkillModal('have')">+ Add Skill</button>
                     </div>
                     <div id="skillsHaveList">
                         <div class="no-skills">No skills added yet</div>
@@ -537,7 +521,7 @@
                 <div class="skills-section">
                     <div class="skills-header">
                         <h2>🎓 Skills I Want</h2>
-                        <button class="add-skill-btn" onclick="openAddSkillModal('want')">+ Add Skill</button>
+                        <button class="btn-primary" onclick="openAddSkillModal('want')">+ Add Skill</button>
                     </div>
                     <div id="skillsWantList">
                         <div class="no-skills">No skills added yet</div>
