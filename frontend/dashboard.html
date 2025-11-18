@@ -1,198 +1,181 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - SkillSwap</title>
+
+    <!-- Main Styles -->
     <link rel="stylesheet" href="css/unified.css">
-    <script src="js/api-config.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/auth.js"></script>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Config + Utilities + Auth -->
+    <script src="js/api-config.js" defer></script>
+    <script src="js/utils.js" defer></script>
+    <script src="js/auth.js" defer></script>
+
+    <!-- Navbar Loader -->
+    <script src="js/common-navbar.js" defer></script>
 </head>
+
 <body>
 
-<!-- Common Navbar will be inserted here by JavaScript -->
-<script src="js/common-navbar.js"></script>
+    <!-- MAIN CONTENT -->
+    <div class="main">
+        <h2 id="dashboardTitle">Dashboard</h2>
 
-<!-- Font Awesome for icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <!-- STAT CARDS -->
+        <div class="stats-grid">
 
-<!-- MAIN CONTENT -->
-<div class="main">
+            <div class="stat-card">
+                <h3>Skills Offered</h3>
+                <p class="stat-value" id="skillsOffered">0</p>
+            </div>
 
-    <h2>Dashboard</h2>
+            <div class="stat-card">
+                <h3>Skills Requested</h3>
+                <p class="stat-value" id="skillsRequested">0</p>
+            </div>
 
-    <!-- STAT CARDS -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>Skills Offered</h3>
-            <p class="stat-value" id="skillsOffered">3</p>
+            <div class="stat-card">
+                <h3>Messages</h3>
+                <p class="stat-value" id="messages">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>P2P Resources</h3>
+                <p class="stat-value" id="p2pResources">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Active Seeders</h3>
+                <p class="stat-value" id="activeSeeders">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Active Leechers</h3>
+                <p class="stat-value" id="activeLeechers">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>Connection Requests</h3>
+                <p class="stat-value" id="connectionRequests">0</p>
+            </div>
+
         </div>
 
-        <div class="stat-card">
-            <h3>Skills Requested</h3>
-            <p class="stat-value" id="skillsRequested">1</p>
+        <!-- RECENT MESSAGES -->
+        <div class="section" id="recentMessagesSection">
+            <h3>Recent Messages</h3>
+            <div id="recentMessagesContainer">
+                <div class="item">Loading...</div>
+            </div>
         </div>
 
-        <div class="stat-card">
-            <h3>Messages</h3>
-            <p class="stat-value" id="messages">12</p>
-        </div>
-
-        <div class="stat-card">
-            <h3>P2P Resources</h3>
-            <p class="stat-value" id="p2pResources">0</p>
-        </div>
-
-        <div class="stat-card">
-            <h3>Active Seeders</h3>
-            <p class="stat-value" id="activeSeeders">0</p>
-        </div>
-
-        <div class="stat-card">
-            <h3>Active Leechers</h3>
-            <p class="stat-value" id="activeLeechers">0</p>
-        </div>
-        
-        <div class="stat-card">
-            <h3>Connection Requests</h3>
-            <p class="stat-value" id="connectionRequests">0</p>
-        </div>
     </div>
 
-    <!-- RECENT MESSAGES -->
-    <div class="section">
-        <h3>Recent Messages</h3>
+    <!-- DASHBOARD SCRIPT -->
+    <script>
 
-        <div class="item">💬 John: “Can you teach me Python?”</div>
-        <div class="item">💬 Sarah: “Interested in your UI/UX skill!”</div>
-        <div class="item">💬 Mike: “Let’s schedule our skill swap.”</div>
-    </div>
-
-</div>
-
-<script>
-// Logout function (auth.js handles the rest)
-function logout() {
-    auth.logout();
+// Reusable HTML escape
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
 }
 
-    // Load dashboard statistics with error boundary and retry
+// Load dashboard statistics
 const loadDashboardStats = withErrorBoundary(withRetry(async () => {
     const userId = auth.getUserId();
     if (!userId) return;
 
     loading.showGlobalWithTimeout('Loading dashboard...');
-    
-    // Load regular dashboard stats
+
+    // Basic Stats
     const stats = await apiCall(`${API_CONFIG.ENDPOINTS.DASHBOARD_STATS}?user_id=${userId}`);
-    
-    // Load P2P statistics
+
+    // P2P Stats
     let p2pStats = { total_resources: 0, active_seeders: 0, active_leechers: 0 };
     try {
         p2pStats = await apiCall('/api/p2p/statistics');
-    } catch (error) {
-        console.warn('Failed to load P2P stats:', error);
+    } catch (err) {
+        console.warn("P2P stats not loaded", err);
     }
-    
-    // Load connection requests
+
+    // Connection Requests
     let connectionStats = { pending: 0 };
     try {
-        const connections = await apiCall(`${API_CONFIG.ENDPOINTS.P2P_CONNECTIONS}?user_id=${userId}&type=received`);
-        connectionStats.pending = connections.filter(c => c.status === 'pending').length;
-    } catch (error) {
-        console.warn('Failed to load connection stats:', error);
+        const con = await apiCall(`${API_CONFIG.ENDPOINTS.P2P_CONNECTIONS}?user_id=${userId}&type=received`);
+        connectionStats.pending = con.filter(c => c.status === "pending").length;
+    } catch (err) {
+        console.warn("Connection stats not loaded", err);
     }
-    
-    // Update stat cards with validation
-    const skillsOfferedEl = document.getElementById('skillsOffered');
-    const skillsRequestedEl = document.getElementById('skillsRequested');
-    const messagesEl = document.getElementById('messages');
-    const p2pResourcesEl = document.getElementById('p2pResources');
-    const activeSeedersEl = document.getElementById('activeSeeders');
-    const activeLeechersEl = document.getElementById('activeLeechers');
-    const connectionRequestsEl = document.getElementById('connectionRequests');
-    
-    if (skillsOfferedEl) skillsOfferedEl.textContent = stats.skills_offered || 0;
-    if (skillsRequestedEl) skillsRequestedEl.textContent = stats.skills_requested || 0;
-    if (messagesEl) messagesEl.textContent = stats.messages || 0;
-    if (p2pResourcesEl) p2pResourcesEl.textContent = p2pStats.total_resources || 0;
-    if (activeSeedersEl) activeSeedersEl.textContent = p2pStats.active_seeders || 0;
-    if (activeLeechersEl) activeLeechersEl.textContent = p2pStats.active_leechers || 0;
-    if (connectionRequestsEl) connectionRequestsEl.textContent = connectionStats.pending || 0;
-    
-    // Load recent messages
-    await loadRecentMessages();
-    
-    loading.hideGlobal();
-}, 3, 1000, 'Load Dashboard'), 'Load Dashboard');
 
-// Load recent messages with error boundary
+    // Update UI
+    document.getElementById('skillsOffered').textContent = stats.skills_offered || 0;
+    document.getElementById('skillsRequested').textContent = stats.skills_requested || 0;
+    document.getElementById('messages').textContent = stats.messages || 0;
+
+    document.getElementById('p2pResources').textContent = p2pStats.total_resources || 0;
+    document.getElementById('activeSeeders').textContent = p2pStats.active_seeders || 0;
+    document.getElementById('activeLeechers').textContent = p2pStats.active_leechers || 0;
+
+    document.getElementById('connectionRequests').textContent = connectionStats.pending || 0;
+
+    await loadRecentMessages();
+
+    loading.hideGlobal();
+}, 3, 1000, "Load Dashboard"), "Load Dashboard");
+
+
+// Load Recent Messages
 const loadRecentMessages = withErrorBoundary(async () => {
     const userId = auth.getUserId();
     if (!userId) return;
-    
-    const recentMessages = await apiCall(`${API_CONFIG.ENDPOINTS.CHATS}?user_id=${userId}&limit=3`);
-    
-    const recentSection = document.querySelector('.section');
-    if (!recentSection) return;
-    
-    const messagesContainer = recentSection.querySelector('.item')?.parentNode;
-    if (!messagesContainer) return;
-    
-    messagesContainer.innerHTML = '';
-    
-    if (recentMessages && recentMessages.length > 0) {
-        recentMessages.slice(0, 3).forEach(chat => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'item';
-            
-            const displayName = chat.name || chat.username || `User ${chat.user_id}`;
-            const lastMessage = chat.last_msg || 'No messages yet';
-            
-            messageDiv.innerHTML = `💬 ${escapeHtml(displayName)}: "${escapeHtml(lastMessage)}"`;
-            messagesContainer.appendChild(messageDiv);
-        });
-    } else {
-        messagesContainer.innerHTML = '<div class="item">No recent messages</div>';
-    }
-}, 'Load Recent Messages');
 
-// Utility function to escape HTML (if not already available)
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+    const data = await apiCall(`${API_CONFIG.ENDPOINTS.CHATS}?user_id=${userId}&limit=3`);
 
-// Initialize dashboard
-async function initDashboard() {
-    if (!auth.requireAuth()) return;
-    
-    const username = auth.getUsername();
-    
-    // Update profile button with username
-    const profileBtn = document.getElementById("profileBtn");
-    if (profileBtn) {
-        profileBtn.textContent = username;
+    const container = document.getElementById("recentMessagesContainer");
+    container.innerHTML = "";
+
+    if (!data || data.length === 0) {
+        container.innerHTML = `<div class="item">No recent messages</div>`;
+        return;
     }
-    
-    // Update welcome message or other user-specific content
-    const welcomeElements = document.querySelectorAll("h2");
-    welcomeElements.forEach(el => {
-        if (el.textContent === "Dashboard") {
-            el.textContent = `Welcome back, ${username}!`;
-        }
+
+    data.forEach(chat => {
+        const name = chat.name || chat.username || `User ${chat.user_id}`;
+        const msg = chat.last_msg || "No messages yet";
+
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `💬 ${escapeHtml(name)}: "${escapeHtml(msg)}"`;
+        container.appendChild(div);
     });
-    
-    // Load dashboard data
+}, "Load Recent Messages");
+
+
+// Init Dashboard
+async function initDashboard() {
+
+    if (!auth.requireAuth()) return;
+
+    const username = auth.getUsername();
+
+    // Update Dashboard Title
+    const title = document.getElementById("dashboardTitle");
+    title.textContent = `Welcome back, ${username}!`;
+
+    // Load Data
     await loadDashboardStats();
 }
 
-// Mobile menu toggle is now handled by common-navbar.js
+// Start App
+document.addEventListener("DOMContentLoaded", initDashboard);
 
-// Run initialization when page loads
-document.addEventListener('DOMContentLoaded', initDashboard);
-</script>
+    </script>
 
 </body>
 </html>
