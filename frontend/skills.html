@@ -485,8 +485,8 @@
 
     <!-- Main Content -->
     <div class="skills-main-container">
-        <h2>Skills Management</h2>
-        <p>Manage your skills and discover new ones from the community.</p>
+        <h2>Skills <Search></Search></h2>
+        <p>Search your desired skills.</p>
 
         <!-- Search Section -->
         <div class="search-section">
@@ -501,33 +501,6 @@
                 <button class="search-btn" onclick="searchSkills()">Search</button>
             </div>
         </div>
-
-        <!-- Two Column Layout -->
-        <div class="skills-container">
-            <!-- Left Column: My Skills -->
-            <div class="my-skills-section">
-                <!-- Skills I Have -->
-                <div class="skills-section">
-                    <div class="skills-header">
-                        <h2>Skills I Have</h2>
-                        <button class="btn-primary" onclick="openAddSkillModal('have')">+ Add Skill</button>
-                    </div>
-                    <div id="skillsHaveList">
-                        <div class="no-skills">No skills added yet</div>
-                    </div>
-                </div>
-
-                <!-- Skills I Want -->
-                <div class="skills-section">
-                    <div class="skills-header">
-                        <h2> Skills I Want</h2>
-                        <button class="btn-primary" onclick="openAddSkillModal('want')">+ Add Skill</button>
-                    </div>
-                    <div id="skillsWantList">
-                        <div class="no-skills">No skills added yet</div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Right Column: Search Results -->
             <div class="search-results-section">
@@ -544,26 +517,7 @@
         </div>
     </div>
 
-    <!-- Add Skill Modal -->
-    <div id="addSkillModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">Add Skill</h3>
-                <button class="close-btn" onclick="closeAddSkillModal()">&times;</button>
-            </div>
-            <form id="addSkillForm" onsubmit="event.preventDefault(); addSkill();">
-                <div class="form-group">
-                    <label for="skillInput">Skill Name</label>
-                    <input type="text" id="skillInput" placeholder="e.g., JavaScript, Design, Marketing" required>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="closeAddSkillModal()">Cancel</button>
-                    <button type="submit" class="btn-primary">Add Skill</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+  
     <!-- P2P Request Modal -->
     <div id="p2pRequestModal" class="modal">
         <div class="modal-content">

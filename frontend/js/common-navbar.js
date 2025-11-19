@@ -38,13 +38,13 @@ class CommonNavbar {
                     
                     <div class="nav-links" id="navLinks">
                         <a href="dashboard.html" data-page="dashboard">
-                            <i class="fas fa-home"></i> Dashboard
+                            <i class="fas fa-home"></i> Home
                         </a>
                         <a href="chat.html" data-page="chat">
                             <i class="fas fa-comments"></i> Messages
                         </a>
                         <a href="skills.html" data-page="skills">
-                            <i class="fas fa-graduation-cap"></i> Skills
+                            <i class="fas fa-graduation-cap"></i> Find Skills
                         </a>
                         <a href="p2p-dashboard.html" data-page="p2p-dashboard">
                             <i class="fas fa-network-wired"></i> P2P Networking
