@@ -98,7 +98,12 @@ CREATE TABLE IF NOT EXISTS resource_ratings (
     UNIQUE(resource_id, user_id)
 );
 
-
+CREATE TABLE IF NOT EXISTS activity_log(
+    id SERIAL PRIMARY KEY,
+    log_time TIMESTAMP DEFAULT NOW(),
+    activity_type VARCHAR(30),
+    descr VARCHAR(100)
+);
 
 CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages (sender_id, receiver_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_resources_category ON resources(skill_category);
