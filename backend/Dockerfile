@@ -1,3 +1,9 @@
+#what the Dockerfile does:
+#1. Build your Go backend inside a Go image
+#2. Copy the compiled binary into a tiny Alpine image
+#3. Runs your backend on port 8080
+
+
 # Build stage
 FROM golang:1.25-alpine AS builder
 

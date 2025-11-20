@@ -12,14 +12,14 @@ func main() {
 	db.Connect()
 
 	// Start WebSocket managers
-	handlers.StartUnifiedManager()
-	handlers.StartP2PManager()
+	handlers.StartUnifiedManager()//for chat and notifications
+	handlers.StartP2PManager()//for p2p
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/static"))))
-
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/static"))))//anything like /static/css/style.css
+	//all api endpoints
 	http.HandleFunc("/api/signup", cors(handlers.Signup))
 	http.HandleFunc("/api/login", cors(handlers.Login))
-	http.HandleFunc("/api/ws", cors(handlers.HandleUnifiedWebSocket))
+	http.HandleFunc("/api/ws", cors(handlers.HandleUnifiedWebSocket))//web sockets
 	http.HandleFunc("/api/p2p/ws", cors(handlers.HandleP2PWebSocket))
 	http.HandleFunc("/api/chats", cors(handlers.GetChatList))
 	http.HandleFunc("/api/history", cors(handlers.GetHistory))
@@ -140,7 +140,7 @@ func main() {
 	// Serve files
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 	http.Handle("/p2p_resources/", http.StripPrefix("/p2p_resources/", http.FileServer(http.Dir("./p2p_resources"))))
-
+//start http server
 	log.Println("Backend running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }

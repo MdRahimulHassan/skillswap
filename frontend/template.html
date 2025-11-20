@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Log</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .activity-log-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .activity-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            color: #007bff; /* Example color */
+        }
+        .activity-details {
+            flex-grow: 1;
+        }
+        .activity-details h3 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 18px;
+            color: #333;
+        }
+        .activity-details p {
+            margin-bottom: 5px;
+            color: #666;
+        }
+        .activity-timestamp {
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="activity-log-container">
+        <h1>Activity Log</h1>
+
+        <div class="activity-item">
+            <div class="activity-icon">&#9881;</div> <!-- Example icon (gear symbol) -->
+            <div class="activity-details">
+                <h3>System Configuration Updated</h3>
+                <p>User 'admin' updated system settings related to user permissions.</p>
+            </div>
+            <div class="activity-timestamp">2025-11-20 09:30 AM</div>
+        </div>
+
+        <div class="activity-item">
+            <div class="activity-icon">&#9989;</div> <!-- Example icon (checkmark) -->
+            <div class="activity-details">
+                <h3>New User Registered</h3>
+                <p>A new user 'john.doe' successfully registered for an account.</p>
+            </div>
+            <div class="activity-timestamp">2025-11-20 08:45 AM</div>
+        </div>
+
+        <div class="activity-item">
+            <div class="activity-icon">&#9888;</div> <!-- Example icon (warning sign) -->
+            <div class="activity-details">
+                <h3>Login Attempt Failed</h3>
+                <p>Failed login attempt for user 'jane.smith' from IP address 192.168.1.10.</p>
+            </div>
+            <div class="activity-timestamp">2025-11-19 05:10 PM</div>
+        </div>
+
+        
+
+    </div>
+</body>
+</html>
