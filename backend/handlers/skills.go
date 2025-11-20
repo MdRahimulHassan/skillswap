@@ -128,6 +128,17 @@ func AddSkill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
+	_,err = db.DB.Exec(
+		`INSERT INTO activity_log(id, activity_type, descr VALUES('SELECT `+columnName+` FROM users WHERE id = $1','Add Skill','Added a new skill'  ))`,
+	)
+	if err != nil {
+		http.Error(w, "Failed to update activity log", http.StatusInternalServerError)
+		return
+	}else{
+		log.Println("Activity log updated successfully")
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(SkillResponse{
 		Success: true,

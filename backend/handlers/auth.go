@@ -57,6 +57,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	// Return JSON response
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]string{"status": "success", "message": "Account created successfully"}
