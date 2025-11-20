@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS resource_ratings (
     UNIQUE(resource_id, user_id)
 );
 
+
+
 CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages (sender_id, receiver_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_resources_category ON resources(skill_category);
 CREATE INDEX IF NOT EXISTS idx_resources_tags ON resources USING GIN(tags);

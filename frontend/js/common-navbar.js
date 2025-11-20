@@ -49,6 +49,10 @@ class CommonNavbar {
                         <a href="p2p-dashboard.html" data-page="p2p-dashboard">
                             <i class="fas fa-network-wired"></i> P2P Networking
                         </a>
+                        <a href="activitylog.html" data-page="activitylog">
+                            <i class="fas fa-network-wired"></i> Activity Log
+                        </a>
+
                     </div>
                     
                     <div class="profile-dropdown">
